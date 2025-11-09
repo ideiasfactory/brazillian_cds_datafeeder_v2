@@ -4,15 +4,24 @@
     {
       "src": "src/api/index.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
+    {
+      "src": "/favicon.ico",
+      "dest": "/public/favicon.ico"
+    },
     {
       "src": "/(.*)",
       "dest": "src/api/index.py"
     }
   ],
   "env": {
-    "ENVIRONMENT": "production"
+    "ENVIRONMENT": "production",
+    "API_VERSION": "2.0.0"
   }
 }

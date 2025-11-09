@@ -2,6 +2,13 @@
 
 A production-ready FastAPI application that scrapes, stores, and serves Brazilian CDS 5-year historical data.
 
+## 🌐 Live Demo
+
+**Production**: [https://brazillian-cds-datafeeder-v2.vercel.app/](https://brazillian-cds-datafeeder-v2.vercel.app/)
+
+- 📚 [API Documentation](https://brazillian-cds-datafeeder-v2.vercel.app/docs)
+- ❤️ [Health Check](https://brazillian-cds-datafeeder-v2.vercel.app/health)
+
 ## 🚀 Features
 
 - **FastAPI Framework**: Modern, fast async web framework
@@ -41,6 +48,35 @@ A production-ready FastAPI application that scrapes, stores, and serves Brazilia
    git clone https://github.com/ideiasfactory/brazillian_cds_datafeeder_v2.git
    cd brazillian_cds_datafeeder_v2
    ```
+
+2. **Set up Python environment**
+   ```bash
+   # Using pyenv (recommended)
+   pyenv virtualenv 3.11.0 brazillian_cds_datafeeder_v2
+   pyenv local brazillian_cds_datafeeder_v2
+   
+   # Or using venv
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Configure environment**
+   ```bash
+   # Copy the example environment file
+   cp .env.example .env
+   
+   # Edit .env with your settings
+   nano .env
+   ```
+   
+   See [ENVIRONMENT.md](ENVIRONMENT.md) for detailed configuration guide.
+
+5. **Run the application**
 
 2. **Create virtual environment**
    ```bash

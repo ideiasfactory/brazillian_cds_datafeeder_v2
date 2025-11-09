@@ -1,5 +1,11 @@
 # Migration Summary: Flask → FastAPI
 
+## 🌐 Live Deployment
+
+**Production URL**: https://brazillian-cds-datafeeder-v2.vercel.app/
+
+**Status**: ✅ Successfully deployed and operational
+
 ## ✅ Completed Changes
 
 ### 1. **Application Entry Point** (`main.py`)

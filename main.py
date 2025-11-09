@@ -1,20 +1,21 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.api import health_router, home_router
+from src.config import settings
 
 # Create FastAPI application
 app = FastAPI(
     title="Brazilian CDS Data Feeder",
     description="Credit Default Swap Historical Data API",
-    version="2.0.0",
+    version=settings.api_version,
     docs_url="/docs",
     redoc_url="/redoc",
 )
 
-# Configure CORS for Vercel deployment
+# Configure CORS using settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

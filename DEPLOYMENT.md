@@ -1,5 +1,9 @@
 # Vercel Deployment Guide
 
+## 🌐 Live Deployment
+
+**Production URL**: [https://brazillian-cds-datafeeder-v2.vercel.app/](https://brazillian-cds-datafeeder-v2.vercel.app/)
+
 ## 📋 Prerequisites
 
 - Python 3.9+
@@ -153,9 +157,26 @@ from main import app
 
 ### Static Files Not Loading
 
-**Problem**: HTML template not found
+**Problem**: HTML template not found or "Template file not found" error
 
-**Solution**: Ensure `public/` directory is in the repository and paths are correct.
+**Solution**: 
+
+1. Ensure `public/` directory is included in the deployment:
+   - The `vercel.json` should include static build configuration
+   - Check that `public/home.html` exists in the repository
+
+2. The application now supports multiple path resolution strategies:
+   - `/var/task/public/home.html` (Vercel serverless)
+   - Relative paths for local development
+   - Fallback to embedded HTML if template not found
+
+3. Verify environment variables are set:
+   ```bash
+   ENVIRONMENT=production
+   API_VERSION=2.0.0
+   ```
+
+4. If the issue persists, check Vercel build logs for file inclusion.
 
 ## 📊 Monitoring
 

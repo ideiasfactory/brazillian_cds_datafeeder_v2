@@ -3,8 +3,14 @@
 *.pyc
 __pycache__
 
-# Environments 
-.env 
+# Environment files (keep .env.example for reference)
+.env
+.env.local
+.env.dev
+.env.prod
+.env.staging
+
+# Virtual environments
 .venv 
 env/ 
 venv/ 

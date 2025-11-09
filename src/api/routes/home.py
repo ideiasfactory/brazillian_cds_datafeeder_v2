@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -5,6 +6,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
 from ..models.home import HomePageData, FeatureInfo, EndpointInfo
+from src.config import settings
 
 router = APIRouter(tags=["Home"])
 
@@ -71,20 +73,76 @@ def render_home_page(data: HomePageData) -> str:
     Returns:
         str: Rendered HTML content
     """
-    # Read the HTML template
-    template_path = Path(__file__).parent.parent.parent.parent / "public" / "home.html"
+    # Try multiple paths to locate the template (for local and Vercel environments)
+    possible_paths = [
+        # Vercel serverless function path
+        Path("/var/task/public/home.html"),
+        # Relative to project root (local development)
+        Path(__file__).parent.parent.parent.parent / "public" / "home.html",
+        # Relative to current working directory
+        Path.cwd() / "public" / "home.html",
+        # Absolute path for Vercel build
+        Path("/var/task") / "public" / "home.html",
+    ]
     
-    try:
-        with open(template_path, "r", encoding="utf-8") as f:
-            html_content = f.read()
-    except FileNotFoundError:
-        # Fallback if template not found
-        return """
-        <html>
-            <body>
-                <h1>Brazilian CDS Data Feeder</h1>
-                <p>Template file not found. Please check public/home.html</p>
-            </body>
+    html_content = None
+    template_path = None
+    
+    for path in possible_paths:
+        try:
+            if path.exists():
+                with open(path, "r", encoding="utf-8") as f:
+                    html_content = f.read()
+                    template_path = path
+                    break
+        except (FileNotFoundError, PermissionError):
+            continue
+    
+    if html_content is None:
+        # Fallback if template not found - provide a basic HTML page
+        return f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Brazilian CDS Data Feeder</title>
+            <style>
+                body {{
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    max-width: 800px;
+                    margin: 50px auto;
+                    padding: 20px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    min-height: 100vh;
+                }}
+                .container {{
+                    background: white;
+                    padding: 40px;
+                    border-radius: 12px;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+                }}
+                h1 {{ color: #2d3748; margin-bottom: 10px; }}
+                .version {{ background: #667eea; color: white; padding: 4px 12px; border-radius: 12px; font-size: 14px; }}
+                .links {{ margin-top: 30px; }}
+                .link {{ display: inline-block; margin: 10px 10px 10px 0; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; }}
+                .link:hover {{ background: #764ba2; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🇧🇷 Brazilian CDS Data Feeder</h1>
+                <span class="version">v{data.version}</span>
+                <p style="margin-top: 20px; color: #4a5568;">
+                    Credit Default Swap Historical Data API
+                </p>
+                <div class="links">
+                    <a href="/docs" class="link">📚 API Documentation</a>
+                    <a href="/health" class="link">❤️ Health Check</a>
+                    <a href="/api/home/data" class="link">📊 API Data</a>
+                </div>
+            </div>
+        </body>
         </html>
         """
     
@@ -110,11 +168,7 @@ async def home_page(request: Request) -> HTMLResponse:
     Returns:
         HTMLResponse: Rendered home page
     """
-    # TODO: Get version and environment from settings/config
-    version = "2.0.0"
-    environment = "development"
-    
-    page_data = get_home_page_data(version=version, environment=environment)
+    page_data = get_home_page_data(version=settings.api_version, environment=settings.environment)
     html_content = render_home_page(page_data)
     
     return HTMLResponse(content=html_content, status_code=200)
@@ -131,8 +185,4 @@ async def get_home_data() -> HomePageData:
     Returns:
         HomePageData: Structured home page data
     """
-    # TODO: Get version and environment from settings/config
-    version = "2.0.0"
-    environment = "development"
-    
-    return get_home_page_data(version=version, environment=environment)
+    return get_home_page_data(version=settings.api_version, environment=settings.environment)

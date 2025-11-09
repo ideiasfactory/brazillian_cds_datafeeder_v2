@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 from ..models.health import HealthResponse, DatabaseStatus
+from src.config import settings
 
 router = APIRouter(prefix="/health", tags=["Health"])
 
@@ -69,14 +70,10 @@ async def health_check(
     else:
         status = "degraded"
     
-    # TODO: Get these from settings/config
-    version = "2.0.0"
-    environment = "development"
-    
     return HealthResponse(
         status=status,
-        version=version,
-        environment=environment,
+        version=settings.api_version,
+        environment=settings.environment,
         timestamp=datetime.utcnow(),
         uptime_seconds=uptime,
         database=db_status
