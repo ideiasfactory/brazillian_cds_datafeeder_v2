@@ -5,8 +5,7 @@
       "src": "src/api/index.py",
       "use": "@vercel/python",
       "config": {
-        "runtime": "python3.12",
-        "includeFiles": ["public/**"]
+        "runtime": "python3.12"
       }
     },
     {

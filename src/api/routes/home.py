@@ -75,14 +75,14 @@ def render_home_page(data: HomePageData) -> str:
     """
     # Try multiple paths to locate the template (for local and Vercel environments)
     possible_paths = [
+        # Relative to this file - templates folder (BEST for Vercel)
+        Path(__file__).parent.parent / "templates" / "home.html",
         # Vercel serverless function path
-        Path("/var/task/public/home.html"),
+        Path("/var/task/src/api/templates/home.html"),
+        # Public folder (local development)
+        Path(__file__).parent.parent.parent.parent / "public" / "home.html",
         # Alternative Vercel path
-        Path("/var/task/.vercel/output/static/public/home.html"),
-        # Relative to src/api/index.py (Vercel entry point)
-        Path(__file__).parent.parent.parent.parent / "public" / "home.html",
-        # Relative to project root (local development)
-        Path(__file__).parent.parent.parent.parent / "public" / "home.html",
+        Path("/var/task/public/home.html"),
         # Relative to current working directory
         Path.cwd() / "public" / "home.html",
     ]
@@ -200,11 +200,14 @@ async def favicon():
     """
     # Try multiple paths to locate the favicon
     possible_paths = [
+        # Relative to this file - templates folder (BEST for Vercel)
+        Path(__file__).parent.parent / "templates" / "favicon.ico",
         # Vercel serverless function path
-        Path("/var/task/public/favicon.ico"),
-        # Relative to project root (local development)
+        Path("/var/task/src/api/templates/favicon.ico"),
+        # Public folder (local development)
         Path(__file__).parent.parent.parent.parent / "public" / "favicon.ico",
-        # Relative to current working directory
+        # Alternative paths
+        Path("/var/task/public/favicon.ico"),
         Path.cwd() / "public" / "favicon.ico",
     ]
     

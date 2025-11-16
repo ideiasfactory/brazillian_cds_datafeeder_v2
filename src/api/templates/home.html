@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Brazilian CDS Data Feeder</title>
+        <link rel="icon" type="image/svg+xml" href="/favicon.ico">
+        <link rel="alternate icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' style='stop-color:%23667eea'/><stop offset='1' style='stop-color:%23764ba2'/></linearGradient></defs><rect width='100' height='100' rx='20' fill='url(%23g)'/><circle cx='30' cy='35' r='15' fill='%2348bb78' opacity='0.9'/><circle cx='70' cy='35' r='15' fill='%23f6e05e' opacity='0.9'/><rect x='20' y='55' width='60' height='8' rx='4' fill='%234299e1' opacity='0.9'/><path d='M 30 70 Q 50 85 70 70' stroke='%23ed8936' stroke-width='5' fill='none' stroke-linecap='round' opacity='0.9'/><text x='50' y='90' font-size='12' text-anchor='middle' fill='white' font-weight='bold'>BR</text></svg>">
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 20px;
+            }
+            
+            .container {
+                background: white;
+                border-radius: 20px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                max-width: 900px;
+                width: 100%;
+                padding: 50px;
+                animation: fadeIn 0.8s ease-in;
+            }
+            
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            .header {
+                text-align: center;
+                margin-bottom: 40px;
+            }
+            
+            .logo {
+                font-size: 48px;
+                margin-bottom: 10px;
+            }
+            
+            h1 {
+                color: #2d3748;
+                font-size: 36px;
+                margin-bottom: 10px;
+                font-weight: 700;
+            }
+            
+            .subtitle {
+                color: #718096;
+                font-size: 18px;
+                margin-bottom: 10px;
+            }
+            
+            .version {
+                display: inline-block;
+                background: #667eea;
+                color: white;
+                padding: 5px 15px;
+                border-radius: 20px;
+                font-size: 14px;
+                font-weight: 600;
+            }
+            
+            .environment {
+                display: inline-block;
+                background: #48bb78;
+                color: white;
+                padding: 5px 15px;
+                border-radius: 20px;
+                font-size: 14px;
+                font-weight: 600;
+                margin-left: 10px;
+            }
+            
+            .environment.production {
+                background: #f56565;
+            }
+            
+            .description {
+                text-align: center;
+                color: #4a5568;
+                font-size: 16px;
+                line-height: 1.6;
+                margin-bottom: 40px;
+                padding: 0 20px;
+            }
+            
+            .features {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 20px;
+                margin-bottom: 40px;
+            }
+            
+            .feature {
+                background: #f7fafc;
+                padding: 25px;
+                border-radius: 12px;
+                border: 2px solid #e2e8f0;
+                transition: all 0.3s ease;
+            }
+            
+            .feature:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+                border-color: #667eea;
+            }
+            
+            .feature-icon {
+                font-size: 32px;
+                margin-bottom: 15px;
+            }
+            
+            .feature-title {
+                color: #2d3748;
+                font-size: 18px;
+                font-weight: 600;
+                margin-bottom: 8px;
+            }
+            
+            .feature-desc {
+                color: #718096;
+                font-size: 14px;
+                line-height: 1.5;
+            }
+            
+            .links {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+                margin-bottom: 30px;
+            }
+            
+            .link-button {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 15px 25px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                text-decoration: none;
+                border-radius: 10px;
+                font-weight: 600;
+                font-size: 16px;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            }
+            
+            .link-button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+            }
+            
+            .link-button.secondary {
+                background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+                box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);
+            }
+            
+            .link-button.secondary:hover {
+                box-shadow: 0 6px 20px rgba(72, 187, 120, 0.6);
+            }
+            
+            .link-button.tertiary {
+                background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+                box-shadow: 0 4px 15px rgba(237, 137, 54, 0.4);
+            }
+            
+            .link-button.tertiary:hover {
+                box-shadow: 0 6px 20px rgba(237, 137, 54, 0.6);
+            }
+            
+            .link-icon {
+                margin-right: 8px;
+            }
+            
+            .endpoints {
+                background: #f7fafc;
+                padding: 25px;
+                border-radius: 12px;
+                margin-bottom: 30px;
+            }
+            
+            .endpoints-title {
+                color: #2d3748;
+                font-size: 20px;
+                font-weight: 600;
+                margin-bottom: 20px;
+            }
+            
+            .endpoint {
+                display: flex;
+                align-items: center;
+                padding: 12px;
+                margin-bottom: 10px;
+                background: white;
+                border-radius: 8px;
+                border-left: 4px solid #667eea;
+            }
+            
+            .endpoint-method {
+                background: #667eea;
+                color: white;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 600;
+                margin-right: 12px;
+                min-width: 40px;
+                text-align: center;
+            }
+            
+            .endpoint-path {
+                color: #2d3748;
+                font-family: 'Courier New', monospace;
+                font-weight: 600;
+                margin-right: 12px;
+            }
+            
+            .endpoint-desc {
+                color: #718096;
+                font-size: 14px;
+                margin-left: auto;
+            }
+            
+            .footer {
+                text-align: center;
+                color: #718096;
+                font-size: 14px;
+                padding-top: 30px;
+                border-top: 1px solid #e2e8f0;
+            }
+            
+            .footer a {
+                color: #667eea;
+                text-decoration: none;
+                font-weight: 600;
+            }
+            
+            .footer a:hover {
+                color: #764ba2;
+            }
+            
+            @media (max-width: 768px) {
+                .container {
+                    padding: 30px 20px;
+                }
+                
+                h1 {
+                    font-size: 28px;
+                }
+                
+                .features {
+                    grid-template-columns: 1fr;
+                }
+                
+                .links {
+                    grid-template-columns: 1fr;
+                }
+                
+                .endpoint {
+                    flex-direction: column;
+                    align-items: flex-start;
+                }
+                
+                .endpoint-desc {
+                    margin-left: 0;
+                    margin-top: 8px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <div class="logo">🇧🇷 📊</div>
+                <h1>Brazilian CDS Data Feeder</h1>
+                <p class="subtitle">Credit Default Swap Historical Data API</p>
+                <div>
+                    <span class="version">v${API_VERSION}</span>
+                    <span class="environment ${ENVIRONMENT_CLASS}">${ENVIRONMENT}</span>
+                </div>
+            </div>
+            
+            <p class="description">
+                A production-ready FastAPI application that scrapes, stores, and serves Brazilian CDS 5-year historical data. 
+                Features automated daily updates, dual storage system (CSV/PostgreSQL), and comprehensive REST API.
+            </p>
+            
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">🔄</div>
+                    <div class="feature-title">Automated Scraping</div>
+                    <div class="feature-desc">Daily updates from Investing.com with retry logic and backup strategies</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">💾</div>
+                    <div class="feature-title">Dual Storage</div>
+                    <div class="feature-desc">CSV for development, PostgreSQL for production with async operations</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">⚡</div>
+                    <div class="feature-title">FastAPI Powered</div>
+                    <div class="feature-desc">Modern async framework with automatic OpenAPI documentation</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">☁️</div>
+                    <div class="feature-title">Serverless Ready</div>
+                    <div class="feature-desc">Optimized for Vercel deployment with zero configuration</div>
+                </div>
+            </div>
+            
+            <div class="links">
+                <a href="/docs" class="link-button">
+                    <span class="link-icon">📚</span>
+                    Interactive Docs
+                </a>
+                <a href="/redoc" class="link-button secondary">
+                    <span class="link-icon">📖</span>
+                    API Reference
+                </a>
+                <a href="/health" class="link-button tertiary">
+                    <span class="link-icon">❤️</span>
+                    Health Check
+                </a>
+            </div>
+            
+            <div class="endpoints">
+                <div class="endpoints-title">🎯 Quick API Endpoints</div>
+                <div class="endpoint">
+                    <span class="endpoint-method">GET</span>
+                    <span class="endpoint-path">/cds/</span>
+                    <span class="endpoint-desc">Get all CDS data</span>
+                </div>
+                <div class="endpoint">
+                    <span class="endpoint-method">GET</span>
+                    <span class="endpoint-path">/cds/latest</span>
+                    <span class="endpoint-desc">Latest records</span>
+                </div>
+                <div class="endpoint">
+                    <span class="endpoint-method">GET</span>
+                    <span class="endpoint-path">/cds/stats</span>
+                    <span class="endpoint-desc">Dataset statistics</span>
+                </div>
+                <div class="endpoint">
+                    <span class="endpoint-method">GET</span>
+                    <span class="endpoint-path">/health</span>
+                    <span class="endpoint-desc">API health status</span>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p>Made with ❤️ by <a href="https://github.com/ideiasfactory" target="_blank">Ideas Factory</a></p>
+                <p style="margin-top: 10px;">
+                    <a href="https://github.com/ideiasfactory/brazillian_cds_datafeeder" target="_blank">
+                        View on GitHub →
+                    </a>
+                </p>
+            </div>
+        </div>
+    </body>
+    </html>
