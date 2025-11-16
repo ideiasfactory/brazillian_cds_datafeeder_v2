@@ -77,12 +77,14 @@ def render_home_page(data: HomePageData) -> str:
     possible_paths = [
         # Vercel serverless function path
         Path("/var/task/public/home.html"),
+        # Alternative Vercel path
+        Path("/var/task/.vercel/output/static/public/home.html"),
+        # Relative to src/api/index.py (Vercel entry point)
+        Path(__file__).parent.parent.parent.parent / "public" / "home.html",
         # Relative to project root (local development)
         Path(__file__).parent.parent.parent.parent / "public" / "home.html",
         # Relative to current working directory
         Path.cwd() / "public" / "home.html",
-        # Absolute path for Vercel build
-        Path("/var/task") / "public" / "home.html",
     ]
     
     html_content = None
