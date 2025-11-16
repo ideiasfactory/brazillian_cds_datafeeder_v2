@@ -25,6 +25,9 @@
   ],
   "env": {
     "ENVIRONMENT": "production",
-    "API_VERSION": "2.0.0"
+    "API_VERSION": "2.0.0",
+    "LOG_LEVEL": "INFO",
+    "BETTERSTACK_SOURCE_TOKEN": "@betterstack_source_token",
+    "BETTERSTACK_INGESTING_HOST": "@betterstack_ingesting_host"
   }
 }

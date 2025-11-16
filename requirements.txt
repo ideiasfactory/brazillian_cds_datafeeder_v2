@@ -11,6 +11,10 @@ pydantic-settings==2.12.0
 # Configuration
 python-dotenv==1.2.1
 
+# Logging & Monitoring
+python-json-logger==3.2.1
+requests==2.32.3
+
 # Server & Utilities
 h11==0.16.0
 httptools==0.7.1

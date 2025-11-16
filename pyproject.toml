@@ -10,6 +10,8 @@ dependencies = [
   "pydantic-core==2.41.5",
   "pydantic-settings==2.12.0",
   "python-dotenv==1.2.1",
+  "python-json-logger==3.2.1",
+  "requests==2.32.3",
   "h11==0.16.0",
   "httptools==0.7.1",
   "watchfiles==1.1.1",

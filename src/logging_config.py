@@ -1,0 +1,241 @@
+"""
+Advanced logging configuration with BetterStack (Logtail) integration.
+Provides structured logging with context and automatic error tracking.
+"""
+
+import logging
+import sys
+import json
+from datetime import datetime
+from typing import Any, Dict, Optional
+from pythonjsonlogger.json import JsonFormatter
+import requests
+from functools import wraps
+
+from .config import get_settings
+
+settings = get_settings()
+
+
+class BetterStackHandler(logging.Handler):
+    """
+    Custom logging handler that sends logs to BetterStack (Logtail).
+    """
+    
+    def __init__(self, source_token: str, ingesting_host: str):
+        super().__init__()
+        self.source_token = source_token
+        self.ingesting_host = ingesting_host
+        self.session = requests.Session()
+        self.session.headers.update({
+            "Authorization": f"Bearer {source_token}",
+            "Content-Type": "application/json"
+        })
+    
+    def emit(self, record: logging.LogRecord) -> None:
+        """Send log record to BetterStack."""
+        try:
+            log_entry = self.format(record)
+            
+            # Parse the JSON log entry
+            if isinstance(log_entry, str):
+                log_data = json.loads(log_entry)
+            else:
+                log_data = log_entry
+            
+            # Send to BetterStack
+            url = f"https://{self.ingesting_host}"
+            response = self.session.post(
+                url,
+                json=log_data,
+                timeout=5
+            )
+            response.raise_for_status()
+            
+        except Exception as e:
+            # Don't let logging errors break the application
+            print(f"Failed to send log to BetterStack: {e}", file=sys.stderr)
+
+
+class StructuredFormatter(JsonFormatter):
+    """
+    JSON formatter with additional context and metadata.
+    """
+    
+    def add_fields(self, log_record: Dict[str, Any], record: logging.LogRecord, message_dict: Dict[str, Any]) -> None:
+        """Add custom fields to log record."""
+        super().add_fields(log_record, record, message_dict)
+        
+        # Add timestamp in ISO format
+        log_record['timestamp'] = datetime.utcnow().isoformat() + 'Z'
+        
+        # Add log level
+        log_record['level'] = record.levelname
+        
+        # Add environment information
+        log_record['environment'] = settings.environment
+        log_record['api_version'] = settings.api_version
+        
+        # Add Vercel information if available
+        if settings.is_vercel:
+            log_record['platform'] = 'vercel'
+        
+        # Add exception info if present
+        if record.exc_info:
+            log_record['exception'] = self.formatException(record.exc_info)
+        
+        # Add custom context if present
+        if hasattr(record, 'context'):
+            log_record['context'] = getattr(record, 'context')
+
+
+def setup_logging() -> logging.Logger:
+    """
+    Configure logging for the application.
+    
+    Returns:
+        logging.Logger: Configured logger instance
+    """
+    # Get root logger
+    logger = logging.getLogger("brazilian_cds")
+    logger.setLevel(getattr(logging, settings.log_level.upper()))
+    
+    # Remove existing handlers
+    logger.handlers.clear()
+    
+    # Console handler with structured logging
+    console_handler = logging.StreamHandler(sys.stdout)
+    
+    if settings.is_production:
+        # Use JSON formatting in production
+        formatter = StructuredFormatter(
+            '%(timestamp)s %(level)s %(name)s %(message)s'
+        )
+    else:
+        # Use readable formatting in development
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+    
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    
+    # Add BetterStack handler in production
+    if settings.betterstack_enabled:
+        try:
+            # Ensure we have a valid token
+            token = settings.betterstack_source_token
+            if token is not None:
+                betterstack_handler = BetterStackHandler(
+                    source_token=token,
+                    ingesting_host=settings.betterstack_ingesting_host
+                )
+                betterstack_formatter = StructuredFormatter(
+                    '%(timestamp)s %(level)s %(name)s %(message)s'
+                )
+                betterstack_handler.setFormatter(betterstack_formatter)
+                logger.addHandler(betterstack_handler)
+                logger.info("BetterStack logging enabled", extra={
+                    'context': {'host': settings.betterstack_ingesting_host}
+                })
+        except Exception as e:
+            logger.warning(f"Failed to setup BetterStack handler: {e}")
+    
+    # File handler if log_file is specified
+    if settings.log_file:
+        file_handler = logging.FileHandler(settings.log_file)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+    
+    return logger
+
+
+def get_logger(name: str) -> logging.Logger:
+    """
+    Get a logger instance for a specific module.
+    
+    Args:
+        name: Logger name (usually __name__)
+        
+    Returns:
+        logging.Logger: Logger instance
+    """
+    return logging.getLogger(f"brazilian_cds.{name}")
+
+
+def log_with_context(logger: logging.Logger, level: str, message: str, **context) -> None:
+    """
+    Log a message with additional context.
+    
+    Args:
+        logger: Logger instance
+        level: Log level (debug, info, warning, error, critical)
+        message: Log message
+        **context: Additional context key-value pairs
+    """
+    log_func = getattr(logger, level.lower())
+    log_func(message, extra={'context': context})
+
+
+def log_request(func):
+    """
+    Decorator to log API requests with timing and context.
+    """
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        logger = get_logger(func.__module__)
+        
+        # Extract request info if available
+        request_context = {
+            'function': func.__name__,
+            'module': func.__module__
+        }
+        
+        # Check if first arg is a Request object
+        if args and hasattr(args[0], 'method'):
+            request = args[0]
+            request_context.update({
+                'method': request.method,
+                'path': request.url.path,
+                'client': request.client.host if request.client else None
+            })
+        
+        start_time = datetime.utcnow()
+        
+        try:
+            result = await func(*args, **kwargs)
+            
+            # Calculate duration
+            duration = (datetime.utcnow() - start_time).total_seconds()
+            request_context['duration_seconds'] = duration
+            
+            log_with_context(
+                logger, 
+                'info',
+                f"Request completed: {request_context.get('method', 'UNKNOWN')} {request_context.get('path', func.__name__)}",
+                **request_context
+            )
+            
+            return result
+            
+        except Exception as e:
+            duration = (datetime.utcnow() - start_time).total_seconds()
+            request_context['duration_seconds'] = duration
+            request_context['error'] = str(e)
+            request_context['error_type'] = type(e).__name__
+            
+            log_with_context(
+                logger,
+                'error',
+                f"Request failed: {request_context.get('method', 'UNKNOWN')} {request_context.get('path', func.__name__)}",
+                **request_context
+            )
+            
+            raise
+    
+    return wrapper
+
+
+# Initialize logging on module import
+app_logger = setup_logging()

@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_file: Optional[str] = None
     
+    # BetterStack (Logtail) Configuration
+    betterstack_source_token: Optional[str] = None
+    betterstack_ingesting_host: str = "in.logtail.com"
+    
     # External services
     cds_api_url: Optional[str] = None
     cds_api_key: Optional[str] = None
@@ -80,6 +84,15 @@ class Settings(BaseSettings):
     def cors_origins_list(self) -> list[str]:
         """Get CORS origins as a list."""
         return [origin.strip() for origin in self.cors_origins.split(",")]
+    
+    @property
+    def betterstack_enabled(self) -> bool:
+        """Check if BetterStack logging is enabled."""
+        return (
+            self.betterstack_source_token is not None 
+            and len(self.betterstack_source_token) > 0
+            and self.is_production
+        )
     
     def get_environment_class(self) -> str:
         """Get CSS class name for environment badge."""
