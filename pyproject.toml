@@ -1,7 +1,7 @@
 [project]
 name = "brazilian-cds-datafeeder"
 version = "2.0.0"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
   "fastapi==0.121.2",
   "uvicorn[standard]==0.38.0",
