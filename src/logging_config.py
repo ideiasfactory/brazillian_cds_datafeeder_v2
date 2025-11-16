@@ -43,11 +43,20 @@ class BetterStackHandler(logging.Handler):
             else:
                 log_data = log_entry
             
-            # Send to BetterStack
-            url = f"https://{self.ingesting_host}"
+            # BetterStack expects the log in a specific format
+            # The message should be in the 'message' field, and other fields in 'dt' (data)
+            payload = {
+                "message": log_data.get("message", ""),
+                "dt": log_data.get("timestamp", datetime.utcnow().isoformat() + 'Z'),
+                "level": log_data.get("level", "INFO").lower(),
+                **log_data  # Include all other fields
+            }
+            
+            # Send to BetterStack - correct endpoint format
+            url = f"https://{self.ingesting_host}/"
             response = self.session.post(
                 url,
-                json=log_data,
+                json=payload,
                 timeout=5
             )
             response.raise_for_status()
