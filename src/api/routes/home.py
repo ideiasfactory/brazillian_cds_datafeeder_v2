@@ -7,6 +7,10 @@ from fastapi.responses import HTMLResponse, FileResponse
 
 from ..models.home import HomePageData, FeatureInfo, EndpointInfo
 from src.config import settings
+from src.logging_config import get_logger, log_with_context
+
+# Initialize logger
+logger = get_logger(__name__)
 
 router = APIRouter(tags=["Home"])
 
@@ -90,17 +94,44 @@ def render_home_page(data: HomePageData) -> str:
     html_content = None
     template_path = None
     
+    log_with_context(
+        logger,
+        'debug',
+        'Searching for home template',
+        paths_count=len(possible_paths)
+    )
+    
     for path in possible_paths:
         try:
             if path.exists():
                 with open(path, "r", encoding="utf-8") as f:
                     html_content = f.read()
                     template_path = path
+                    log_with_context(
+                        logger,
+                        'info',
+                        'Home template found and loaded',
+                        template_path=str(path)
+                    )
                     break
-        except (FileNotFoundError, PermissionError):
+        except (FileNotFoundError, PermissionError) as e:
+            log_with_context(
+                logger,
+                'debug',
+                'Failed to read template from path',
+                path=str(path),
+                error=str(e)
+            )
             continue
     
     if html_content is None:
+        log_with_context(
+            logger,
+            'warning',
+            'Template not found - using fallback HTML',
+            attempted_paths=len(possible_paths)
+        )
+        
         # Fallback if template not found - provide a basic HTML page
         return f"""
         <!DOCTYPE html>
@@ -170,10 +201,36 @@ async def home_page(request: Request) -> HTMLResponse:
     Returns:
         HTMLResponse: Rendered home page
     """
-    page_data = get_home_page_data(version=settings.api_version, environment=settings.environment)
-    html_content = render_home_page(page_data)
-    
-    return HTMLResponse(content=html_content, status_code=200)
+    try:
+        log_with_context(
+            logger,
+            'debug',
+            'Rendering home page',
+            client_ip=request.client.host if request.client else None
+        )
+        
+        page_data = get_home_page_data(version=settings.api_version, environment=settings.environment)
+        html_content = render_home_page(page_data)
+        
+        log_with_context(
+            logger,
+            'info',
+            'Home page rendered successfully',
+            version=settings.api_version,
+            content_length=len(html_content)
+        )
+        
+        return HTMLResponse(content=html_content, status_code=200)
+        
+    except Exception as e:
+        log_with_context(
+            logger,
+            'error',
+            'Failed to render home page',
+            error=str(e),
+            error_type=type(e).__name__
+        )
+        raise
 
 
 @router.get("/api/home/data", response_model=HomePageData, summary="Home Page Data")
@@ -187,7 +244,35 @@ async def get_home_data() -> HomePageData:
     Returns:
         HomePageData: Structured home page data
     """
-    return get_home_page_data(version=settings.api_version, environment=settings.environment)
+    try:
+        log_with_context(
+            logger,
+            'debug',
+            'Fetching home page data as JSON'
+        )
+        
+        data = get_home_page_data(version=settings.api_version, environment=settings.environment)
+        
+        log_with_context(
+            logger,
+            'info',
+            'Home page data retrieved successfully',
+            version=data.version,
+            features_count=len(data.features),
+            endpoints_count=len(data.endpoints)
+        )
+        
+        return data
+        
+    except Exception as e:
+        log_with_context(
+            logger,
+            'error',
+            'Failed to fetch home page data',
+            error=str(e),
+            error_type=type(e).__name__
+        )
+        raise
 
 
 @router.get("/favicon.ico", include_in_schema=False)
@@ -211,10 +296,30 @@ async def favicon():
         Path.cwd() / "public" / "favicon.ico",
     ]
     
+    log_with_context(
+        logger,
+        'debug',
+        'Searching for favicon',
+        paths_count=len(possible_paths)
+    )
+    
     for path in possible_paths:
         if path.exists():
+            log_with_context(
+                logger,
+                'info',
+                'Favicon found and served',
+                path=str(path)
+            )
             return FileResponse(path, media_type="image/x-icon")
     
     # If favicon not found, return 404
+    log_with_context(
+        logger,
+        'warning',
+        'Favicon not found in any expected location',
+        attempted_paths=len(possible_paths)
+    )
+    
     from fastapi import HTTPException
     raise HTTPException(status_code=404, detail="Favicon not found")
