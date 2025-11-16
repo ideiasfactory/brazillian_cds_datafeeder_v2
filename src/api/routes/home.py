@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 
 from ..models.home import HomePageData, FeatureInfo, EndpointInfo
 from src.config import settings
@@ -186,3 +186,30 @@ async def get_home_data() -> HomePageData:
         HomePageData: Structured home page data
     """
     return get_home_page_data(version=settings.api_version, environment=settings.environment)
+
+
+@router.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    """
+    Serve the favicon.ico file.
+    
+    Returns:
+        FileResponse: Favicon file
+    """
+    # Try multiple paths to locate the favicon
+    possible_paths = [
+        # Vercel serverless function path
+        Path("/var/task/public/favicon.ico"),
+        # Relative to project root (local development)
+        Path(__file__).parent.parent.parent.parent / "public" / "favicon.ico",
+        # Relative to current working directory
+        Path.cwd() / "public" / "favicon.ico",
+    ]
+    
+    for path in possible_paths:
+        if path.exists():
+            return FileResponse(path, media_type="image/x-icon")
+    
+    # If favicon not found, return 404
+    from fastapi import HTTPException
+    raise HTTPException(status_code=404, detail="Favicon not found")
