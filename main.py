@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 import time
 
 from src.api import health_router, home_router
+from src.api.routes import cron as cron_router
 from src.config import settings
 from src.logging_config import get_logger, log_with_context
 
@@ -84,3 +85,4 @@ if public_dir.exists():
 # Include routers
 app.include_router(home_router)  # Includes GET / for home page
 app.include_router(health_router)  # Includes /health endpoints
+app.include_router(cron_router.router, prefix="/api")  # Includes /api/cron endpoints
