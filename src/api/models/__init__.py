@@ -8,7 +8,7 @@ from .cds import (
     CDSStatisticsResponse,
     CDSListData,
     CDSLatestData,
-    CDSStatisticsData
+    CDSStatisticsData,
 )
 
 __all__ = [

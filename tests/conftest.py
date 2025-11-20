@@ -1,4 +1,5 @@
 """Pytest configuration and shared fixtures."""
+
 import asyncio
 import os
 from typing import AsyncGenerator, Generator
@@ -28,20 +29,16 @@ def event_loop() -> Generator:
 @pytest.fixture(scope="function")
 async def test_engine():
     """Create test database engine."""
-    engine = create_async_engine(
-        TEST_DATABASE_URL,
-        echo=False,
-        future=True
-    )
-    
+    engine = create_async_engine(TEST_DATABASE_URL, echo=False, future=True)
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     yield engine
-    
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-    
+
     await engine.dispose()
 
 
@@ -49,11 +46,9 @@ async def test_engine():
 async def test_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
     """Create test database session."""
     async_session = async_sessionmaker(
-        test_engine,
-        class_=AsyncSession,
-        expire_on_commit=False
+        test_engine, class_=AsyncSession, expire_on_commit=False
     )
-    
+
     async with async_session() as session:
         yield session
 
@@ -67,16 +62,15 @@ async def api_key_repository(test_session: AsyncSession) -> APIKeyRepository:
 @pytest.fixture(scope="function")
 async def test_api_key(api_key_repository: APIKeyRepository) -> tuple[str, APIKey]:
     """Create a test API key.
-    
+
     Returns:
         tuple: (api_key_string, api_key_record)
     """
     import secrets
+
     api_key = secrets.token_urlsafe(32)
     record = await api_key_repository.create_key(
-        key=api_key,
-        name="Test Key",
-        description="Test API key for unit tests"
+        key=api_key, name="Test Key", description="Test API key for unit tests"
     )
     return api_key, record
 
@@ -114,7 +108,7 @@ def sample_cds_data() -> list[dict]:
             "high": 152.00,
             "low": 149.50,
             "close": 151.75,
-            "change_pct": 1.25
+            "change_pct": 1.25,
         },
         {
             "date": "2025-11-18",
@@ -122,7 +116,7 @@ def sample_cds_data() -> list[dict]:
             "high": 150.25,
             "low": 148.75,
             "close": 150.00,
-            "change_pct": 0.50
+            "change_pct": 0.50,
         },
         {
             "date": "2025-11-17",
@@ -130,8 +124,8 @@ def sample_cds_data() -> list[dict]:
             "high": 149.75,
             "low": 148.25,
             "close": 149.25,
-            "change_pct": -0.25
-        }
+            "change_pct": -0.25,
+        },
     ]
 
 

@@ -58,3 +58,7 @@ pytest-mock==3.14.0
 httpx==0.28.1
 faker==34.0.0
 aiosqlite==0.20.0
+
+# Code Quality & Formatting
+black==24.10.0
+flake8==7.1.1

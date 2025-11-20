@@ -15,14 +15,16 @@ logger = get_logger(__name__)
 router = APIRouter(tags=["Home"])
 
 
-def get_home_page_data(version: str = "2.0.0", environment: str = "development") -> HomePageData:
+def get_home_page_data(
+    version: str = "2.0.0", environment: str = "development"
+) -> HomePageData:
     """
     Generate home page data with default features and endpoints.
-    
+
     Args:
         version: API version string
         environment: Deployment environment
-        
+
     Returns:
         HomePageData: Structured data for home page rendering
     """
@@ -30,50 +32,50 @@ def get_home_page_data(version: str = "2.0.0", environment: str = "development")
         FeatureInfo(
             icon="🔄",
             title="Automated Scraping",
-            description="Daily updates from Investing.com with retry logic and backup strategies"
+            description="Daily updates from Investing.com with retry logic and backup strategies",
         ),
         FeatureInfo(
             icon="💾",
             title="Dual Storage",
-            description="CSV for development, PostgreSQL for production with async operations"
+            description="CSV for development, PostgreSQL for production with async operations",
         ),
         FeatureInfo(
             icon="⚡",
             title="FastAPI Powered",
-            description="Modern async framework with automatic OpenAPI documentation"
+            description="Modern async framework with automatic OpenAPI documentation",
         ),
         FeatureInfo(
             icon="☁️",
             title="Serverless Ready",
-            description="Optimized for Vercel deployment with zero configuration"
+            description="Optimized for Vercel deployment with zero configuration",
         ),
     ]
-    
+
     endpoints = [
         EndpointInfo(method="GET", path="/cds/", description="Get all CDS data"),
         EndpointInfo(method="GET", path="/cds/latest", description="Latest records"),
         EndpointInfo(method="GET", path="/cds/stats", description="Dataset statistics"),
         EndpointInfo(method="GET", path="/health", description="API health status"),
     ]
-    
+
     environment_class = "production" if environment == "production" else ""
-    
+
     return HomePageData(
         version=version,
         environment=environment,
         environment_class=environment_class,
         features=features,
-        endpoints=endpoints
+        endpoints=endpoints,
     )
 
 
 def render_home_page(data: HomePageData) -> str:
     """
     Render the home page HTML with provided data.
-    
+
     Args:
         data: HomePageData object with all page information
-        
+
     Returns:
         str: Rendered HTML content
     """
@@ -90,17 +92,14 @@ def render_home_page(data: HomePageData) -> str:
         # Relative to current working directory
         Path.cwd() / "public" / "home.html",
     ]
-    
+
     html_content = None
     template_path = None
-    
+
     log_with_context(
-        logger,
-        'debug',
-        'Searching for home template',
-        paths_count=len(possible_paths)
+        logger, "debug", "Searching for home template", paths_count=len(possible_paths)
     )
-    
+
     for path in possible_paths:
         try:
             if path.exists():
@@ -109,29 +108,29 @@ def render_home_page(data: HomePageData) -> str:
                     template_path = path
                     log_with_context(
                         logger,
-                        'info',
-                        'Home template found and loaded',
-                        template_path=str(path)
+                        "info",
+                        "Home template found and loaded",
+                        template_path=str(path),
                     )
                     break
         except (FileNotFoundError, PermissionError) as e:
             log_with_context(
                 logger,
-                'debug',
-                'Failed to read template from path',
+                "debug",
+                "Failed to read template from path",
                 path=str(path),
-                error=str(e)
+                error=str(e),
             )
             continue
-    
+
     if html_content is None:
         log_with_context(
             logger,
-            'warning',
-            'Template not found - using fallback HTML',
-            attempted_paths=len(possible_paths)
+            "warning",
+            "Template not found - using fallback HTML",
+            attempted_paths=len(possible_paths),
         )
-        
+
         # Fallback if template not found - provide a basic HTML page
         return f"""
         <!DOCTYPE html>
@@ -178,12 +177,12 @@ def render_home_page(data: HomePageData) -> str:
         </body>
         </html>
         """
-    
+
     # Replace placeholders with actual data
     html_content = html_content.replace("${API_VERSION}", data.version)
     html_content = html_content.replace("${ENVIRONMENT}", data.environment)
     html_content = html_content.replace("${ENVIRONMENT_CLASS}", data.environment_class)
-    
+
     return html_content
 
 
@@ -191,44 +190,46 @@ def render_home_page(data: HomePageData) -> str:
 async def home_page(request: Request) -> HTMLResponse:
     """
     Serve the application home page.
-    
+
     Returns a beautifully designed HTML page with:
     - API information and version
     - Feature highlights
     - Quick links to documentation
     - Available endpoints list
-    
+
     Returns:
         HTMLResponse: Rendered home page
     """
     try:
         log_with_context(
             logger,
-            'debug',
-            'Rendering home page',
-            client_ip=request.client.host if request.client else None
+            "debug",
+            "Rendering home page",
+            client_ip=request.client.host if request.client else None,
         )
-        
-        page_data = get_home_page_data(version=settings.api_version, environment=settings.environment)
+
+        page_data = get_home_page_data(
+            version=settings.api_version, environment=settings.environment
+        )
         html_content = render_home_page(page_data)
-        
+
         log_with_context(
             logger,
-            'info',
-            'Home page rendered successfully',
+            "info",
+            "Home page rendered successfully",
             version=settings.api_version,
-            content_length=len(html_content)
+            content_length=len(html_content),
         )
-        
+
         return HTMLResponse(content=html_content, status_code=200)
-        
+
     except Exception as e:
         log_with_context(
             logger,
-            'error',
-            'Failed to render home page',
+            "error",
+            "Failed to render home page",
             error=str(e),
-            error_type=type(e).__name__
+            error_type=type(e).__name__,
         )
         raise
 
@@ -237,40 +238,38 @@ async def home_page(request: Request) -> HTMLResponse:
 async def get_home_data() -> HomePageData:
     """
     Get structured home page data as JSON.
-    
+
     Useful for programmatic access to home page information
     or for building custom frontends.
-    
+
     Returns:
         HomePageData: Structured home page data
     """
     try:
-        log_with_context(
-            logger,
-            'debug',
-            'Fetching home page data as JSON'
+        log_with_context(logger, "debug", "Fetching home page data as JSON")
+
+        data = get_home_page_data(
+            version=settings.api_version, environment=settings.environment
         )
-        
-        data = get_home_page_data(version=settings.api_version, environment=settings.environment)
-        
+
         log_with_context(
             logger,
-            'info',
-            'Home page data retrieved successfully',
+            "info",
+            "Home page data retrieved successfully",
             version=data.version,
             features_count=len(data.features),
-            endpoints_count=len(data.endpoints)
+            endpoints_count=len(data.endpoints),
         )
-        
+
         return data
-        
+
     except Exception as e:
         log_with_context(
             logger,
-            'error',
-            'Failed to fetch home page data',
+            "error",
+            "Failed to fetch home page data",
             error=str(e),
-            error_type=type(e).__name__
+            error_type=type(e).__name__,
         )
         raise
 
@@ -279,7 +278,7 @@ async def get_home_data() -> HomePageData:
 async def favicon():
     """
     Serve the favicon.ico file.
-    
+
     Returns:
         FileResponse: Favicon file
     """
@@ -295,31 +294,24 @@ async def favicon():
         Path("/var/task/public/favicon.ico"),
         Path.cwd() / "public" / "favicon.ico",
     ]
-    
+
     log_with_context(
-        logger,
-        'debug',
-        'Searching for favicon',
-        paths_count=len(possible_paths)
+        logger, "debug", "Searching for favicon", paths_count=len(possible_paths)
     )
-    
+
     for path in possible_paths:
         if path.exists():
-            log_with_context(
-                logger,
-                'info',
-                'Favicon found and served',
-                path=str(path)
-            )
+            log_with_context(logger, "info", "Favicon found and served", path=str(path))
             return FileResponse(path, media_type="image/x-icon")
-    
+
     # If favicon not found, return 404
     log_with_context(
         logger,
-        'warning',
-        'Favicon not found in any expected location',
-        attempted_paths=len(possible_paths)
+        "warning",
+        "Favicon not found in any expected location",
+        attempted_paths=len(possible_paths),
     )
-    
+
     from fastapi import HTTPException
+
     raise HTTPException(status_code=404, detail="Favicon not found")

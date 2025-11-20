@@ -2,6 +2,7 @@
 ASGI entry point for Vercel serverless deployment.
 This file is required by Vercel to properly route requests to FastAPI.
 """
+
 import sys
 from pathlib import Path
 
