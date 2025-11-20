@@ -92,7 +92,6 @@ def render_home_page(data: HomePageData) -> str:
     ]
 
     html_content = None
-    template_path = None
 
     log_with_context(
         logger, "debug", "Searching for home template", paths_count=len(possible_paths)
