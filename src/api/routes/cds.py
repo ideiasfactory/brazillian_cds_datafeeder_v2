@@ -7,12 +7,17 @@ from fastapi import APIRouter, HTTPException, Query, Depends, status, Request
 
 from src.database.connection import get_async_session
 from src.database.repositories.cds_repository import CDSRepository
+from src.api.auth import verify_api_key, optional_api_key
 from src.api.models.cds import (
     StandardResponse,
     CDSRecordResponse,
     CDSListData,
     CDSLatestData,
-    CDSStatisticsData
+    CDSStatisticsData,
+    CDSInfoData,
+    CDSSchemaInfo,
+    CDSStatisticsInfo,
+    FieldInfo
 )
 from src.logging_config import get_logger
 
@@ -20,7 +25,7 @@ logger = get_logger(__name__)
 
 router = APIRouter(
     prefix="/cds",
-    tags=["cds"],
+    tags=["CDS Data"],
 )
 
 
@@ -85,13 +90,35 @@ def parse_date_or_error(date_str: str, param_name: str, correlation_id: Optional
             )
 
 
-@router.get("/latest", response_model=StandardResponse)
-async def get_latest_cds(request: Request):
+@router.get(
+    "/latest",
+    response_model=StandardResponse,
+    summary="Get Latest CDS Record",
+    description="Get the most recent CDS record. **Requires API Key authentication.**",
+    responses={
+        200: {"description": "Latest CDS record retrieved successfully"},
+        401: {"description": "Missing or invalid API key"},
+        404: {"description": "No CDS records found"},
+        500: {"description": "Internal server error"}
+    }
+)
+async def get_latest_cds(
+    request: Request,
+    api_key_name: str = Depends(verify_api_key)
+):
     """
     Get the most recent CDS record.
     
+    **Authentication Required:** Include `X-API-Key` header with a valid API key.
+    
     Returns:
-        Standardized response with latest CDS record
+        Standardized response with latest CDS record including:
+        - date: Record date
+        - open: Opening value
+        - high: Highest value
+        - low: Lowest value
+        - close: Closing value
+        - change_pct: Percentage change
     """
     correlation_id = get_correlation_id(request)
     
@@ -134,9 +161,21 @@ async def get_latest_cds(request: Request):
         )
 
 
-@router.get("", response_model=StandardResponse)
+@router.get(
+    "",
+    response_model=StandardResponse,
+    summary="Get CDS Records",
+    description="Get CDS records with optional date range filtering. **Requires API Key authentication.**",
+    responses={
+        200: {"description": "CDS records retrieved successfully"},
+        400: {"description": "Invalid date format or parameters"},
+        401: {"description": "Missing or invalid API key"},
+        500: {"description": "Internal server error"}
+    }
+)
 async def get_cds_records(
     request: Request,
+    api_key_name: str = Depends(verify_api_key),
     data_inicial: Optional[str] = Query(
         None,
         description="Start date in format yyyy-MM-dd (e.g., 2025-01-01)"
@@ -152,6 +191,8 @@ async def get_cds_records(
 ):
     """
     Get CDS records with optional date range filtering.
+    
+    **Authentication Required:** This endpoint requires a valid API key in the X-API-Key header.
     
     **Date Range Logic:**
     - If both dates provided: returns records between the dates
@@ -283,10 +324,33 @@ async def get_cds_records(
         )
 
 
-@router.get("/statistics", response_model=StandardResponse)
-async def get_cds_statistics(request: Request):
+@router.get(
+    "/statistics",
+    response_model=StandardResponse,
+    summary="Get CDS Statistics",
+    description="Get statistical summary of CDS data. **Requires API Key authentication.**",
+    responses={
+        200: {"description": "Statistics retrieved successfully"},
+        401: {"description": "Missing or invalid API key"},
+        500: {"description": "Internal server error"}
+    }
+)
+async def get_cds_statistics(
+    request: Request,
+    api_key_name: str = Depends(verify_api_key)
+):
     """
     Get statistics about CDS data.
+    
+    **Authentication Required:** Include `X-API-Key` header with a valid API key.
+    
+    Returns:
+        Standardized response with CDS statistics including:
+        - total_records: Total number of records
+        - earliest_date: Earliest date in dataset
+        - latest_date: Most recent date in dataset
+        - last_update: Last update timestamp
+        - sources: Data sources information
     
     Returns:
         Standardized response with statistics including total records, date range, and data sources
@@ -316,3 +380,153 @@ async def get_cds_statistics(request: Request):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve CDS statistics: {str(e)}"
         )
+
+
+@router.get(
+    "/info",
+    response_model=StandardResponse,
+    summary="Get CDS Schema Information",
+    description="Get CDS data schema documentation and optional statistics. **Public endpoint - no authentication required.**",
+    responses={
+        200: {"description": "Schema information retrieved successfully"},
+        500: {"description": "Internal server error"}
+    }
+)
+async def get_cds_info(
+    request: Request,
+    include_stats: bool = Query(
+        False, 
+        description="Include database statistics (requires database query)"
+    )
+):
+    """
+    Get CDS data schema documentation and optional database statistics.
+    
+    **No Authentication Required:** This is a public endpoint.
+    
+    This endpoint provides comprehensive information about the CDS data structure,
+    including field definitions, data types, and metadata. Optionally includes
+    real-time database statistics when include_stats=true.
+    
+    Args:
+        include_stats: If True, includes database statistics (slower, requires DB query)
+        
+    Returns:
+        Standardized response with schema documentation and optional statistics
+        
+    Example:
+        GET /api/cds/info - Get schema only (fast)
+        GET /api/cds/info?include_stats=true - Get schema + database stats
+    """
+    correlation_id = get_correlation_id(request)
+    
+    # Define the schema (static, always available)
+    schema = CDSSchemaInfo(
+        entity="cds_record",
+        description="Brazilian CDS 5-year spread historical data in USD",
+        fields=[
+            FieldInfo(
+                name="date",
+                type="date",
+                required=True,
+                description="Trading date in ISO format (YYYY-MM-DD)",
+                example="2025-11-19",
+                unit=None
+            ),
+            FieldInfo(
+                name="open",
+                type="float",
+                required=False,
+                description="Opening price of the trading day",
+                example=0.0234,
+                unit="basis points"
+            ),
+            FieldInfo(
+                name="high",
+                type="float",
+                required=False,
+                description="Highest price during the trading day",
+                example=0.0245,
+                unit="basis points"
+            ),
+            FieldInfo(
+                name="low",
+                type="float",
+                required=False,
+                description="Lowest price during the trading day",
+                example=0.0228,
+                unit="basis points"
+            ),
+            FieldInfo(
+                name="close",
+                type="float",
+                required=True,
+                description="Closing price of the trading day (required field)",
+                example=0.0240,
+                unit="basis points"
+            ),
+            FieldInfo(
+                name="change_pct",
+                type="float",
+                required=False,
+                description="Percentage change from previous trading day",
+                example=2.56,
+                unit="percentage"
+            )
+        ],
+        data_source="investing.com",
+        update_frequency="Daily at 06:00 UTC (03:00 BRT)",
+        currency="USD",
+        unit="Basis points (1 bp = 0.01%)"
+    )
+    
+    # Get statistics if requested
+    statistics = None
+    if include_stats:
+        try:
+            async with get_async_session() as session:
+                repo = CDSRepository(session)
+                stats = await repo.get_statistics()
+                
+                # Get last update log
+                recent_logs = await repo.get_recent_logs(limit=1)
+                last_update = getattr(recent_logs[0], 'started_at', None) if recent_logs and len(recent_logs) > 0 else None
+                
+                statistics = CDSStatisticsInfo(
+                    total_records=stats['total_records'],
+                    earliest_date=stats['earliest_date'],
+                    latest_date=stats['latest_date'],
+                    last_update=last_update,
+                    sources=stats['sources']
+                )
+                
+                logger.info(
+                    f"Retrieved CDS info with statistics: {stats['total_records']} records",
+                    extra={"correlation_id": correlation_id, "include_stats": True}
+                )
+        except Exception as e:
+            logger.warning(
+                f"Failed to retrieve statistics for /info endpoint: {e}",
+                extra={"correlation_id": correlation_id}
+            )
+            # Continue without statistics rather than failing the entire request
+            statistics = None
+    else:
+        logger.info(
+            "Retrieved CDS info (schema only)",
+            extra={"correlation_id": correlation_id, "include_stats": False}
+        )
+    
+    # Build response data
+    info_data = CDSInfoData(
+        schema=schema,
+        statistics=statistics
+    )
+    
+    return StandardResponse(
+        status="success",
+        correlation_id=correlation_id,
+        data=info_data.model_dump(by_alias=True, exclude_none=True),
+        error_message=None,
+        timestamp=datetime.utcnow()
+    )

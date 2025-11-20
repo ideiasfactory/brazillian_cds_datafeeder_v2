@@ -26,14 +26,69 @@ log_with_context(
     betterstack_enabled=settings.betterstack_enabled
 )
 
-# Create FastAPI application
+# Create FastAPI application with security scheme
 app = FastAPI(
     title="Brazilian CDS Data Feeder",
     description="Credit Default Swap Historical Data API",
     version=settings.api_version,
     docs_url="/docs",
     redoc_url="/redoc",
+    openapi_tags=[
+        {
+            "name": "CDS Data",
+            "description": "Operations with CDS (Credit Default Swap) data. **Protected endpoints require X-API-Key header.**",
+        },
+        {
+            "name": "Health",
+            "description": "Health check endpoints for monitoring",
+        },
+        {
+            "name": "Home",
+            "description": "Home page and general information",
+        },
+    ],
 )
+
+
+def custom_openapi():
+    """Custom OpenAPI schema with API Key security."""
+    if app.openapi_schema:
+        return app.openapi_schema
+    
+    from fastapi.openapi.utils import get_openapi
+    
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+        tags=app.openapi_tags,
+    )
+    
+    # Add security scheme
+    openapi_schema["components"]["securitySchemes"] = {
+        "APIKeyHeader": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-API-Key",
+            "description": "API Key for authentication. Contact the administrator to get your key."
+        }
+    }
+    
+    # Apply security to protected endpoints
+    for path, path_item in openapi_schema["paths"].items():
+        # Apply security to CDS endpoints except /info
+        if path.startswith("/api/cds") and not path.endswith("/info"):
+            for method in path_item:
+                if method in ["get", "post", "put", "delete", "patch"]:
+                    if "security" not in path_item[method]:
+                        path_item[method]["security"] = [{"APIKeyHeader": []}]
+    
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
 
 
 @app.exception_handler(HTTPException)

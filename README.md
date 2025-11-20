@@ -15,6 +15,7 @@ A production-ready FastAPI application that scrapes, stores, and serves Brazilia
 - **Automated Data Collection**: Script-based scraping from Investing.com
 - **Dual Storage**: CSV for development, PostgreSQL for production
 - **RESTful API**: Clean endpoints with OpenAPI documentation
+- **API Key Authentication**: Secure API access with database-managed keys
 - **Standardized Responses**: All endpoints return consistent structure with correlation IDs
 - **Health Monitoring**: Kubernetes-ready liveness and readiness probes
 - **BetterStack Logging**: Structured logging with correlation tracking
@@ -135,23 +136,40 @@ Set in Vercel dashboard:
 
 ## 📡 API Endpoints
 
+### Authentication
+
+Most data endpoints require API key authentication. See **[AUTHENTICATION.md](AUTHENTICATION.md)** for:
+- How to create and manage API keys
+- Using authenticated endpoints
+- Security best practices
+
 ### Home
 - `GET /` - Landing page with API information
 - `GET /api/home/data` - Structured home page data (JSON)
 
 ### Health Monitoring
 
-- `GET /health` - Comprehensive health check
-- `GET /health/liveness` - Simple liveness probe
-- `GET /health/readiness` - Readiness probe (checks database)
+- `GET /health` - Comprehensive health check (public)
+- `GET /health/liveness` - Simple liveness probe (public)
+- `GET /health/readiness` - Readiness probe, checks database (public)
 
 ### CDS Data
 
-- `GET /api/cds/latest` - Get most recent CDS record
-- `GET /api/cds` - List CDS records with optional date filtering
-- `GET /api/cds/statistics` - Get statistical summary
+#### Public Endpoints
+- `GET /api/cds/info` - Schema documentation and optional statistics (no authentication)
+
+#### Protected Endpoints (Require API Key)
+- `GET /api/cds/latest` - Get most recent CDS record 🔒
+- `GET /api/cds` - List CDS records with optional date filtering 🔒
+- `GET /api/cds/statistics` - Get statistical summary 🔒
 
 All CDS endpoints return standardized responses with correlation IDs for request tracking.
+
+**Example with authentication:**
+```bash
+curl -H "X-API-Key: YOUR_API_KEY" \
+  https://brazillian-cds-datafeeder-v2.vercel.app/api/cds/latest
+```
 
 ### Documentation
 - `GET /docs` - Interactive Swagger UI
