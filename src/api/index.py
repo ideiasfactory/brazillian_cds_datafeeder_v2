@@ -1,6 +1,8 @@
+# noqa: E402
 """
 ASGI entry point for Vercel serverless deployment.
 This file is required by Vercel to properly route requests to FastAPI.
+# noqa: E402
 """
 
 import sys

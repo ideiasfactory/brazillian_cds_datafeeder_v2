@@ -53,7 +53,7 @@ class APIKeyRepository:
         key_hash = self.hash_key(key)
 
         stmt = select(APIKey).where(
-            and_(APIKey.key_hash == key_hash, APIKey.is_active == True)
+            and_(APIKey.key_hash == key_hash, APIKey.is_active.is_(True))
         )
 
         result = await self.session.execute(stmt)
@@ -158,7 +158,7 @@ class APIKeyRepository:
         stmt = select(APIKey)
 
         if not include_inactive:
-            stmt = stmt.where(APIKey.is_active == True)
+            stmt = stmt.where(APIKey.is_active.is_(True))
 
         stmt = stmt.order_by(APIKey.created_at.desc())
 

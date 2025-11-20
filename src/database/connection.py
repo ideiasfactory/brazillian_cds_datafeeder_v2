@@ -133,7 +133,7 @@ def get_async_engine(force_new: bool = False) -> AsyncEngine:
             connect_args["ssl"] = "require"
 
         # Use NullPool for async to avoid pool issues
-        from sqlalchemy.pool import NullPool
+        #         from sqlalchemy.pool import NullPool
 
         _async_engine = create_async_engine(
             db_url,
