@@ -289,6 +289,59 @@ Tests run automatically on:
 
 See [`.github/workflows/tests.yml`](.github/workflows/tests.yml) for CI configuration.
 
+**Test Results**: Check the ![Tests](https://github.com/ideiasfactory/brazillian_cds_datafeeder_v2/actions/workflows/tests.yml/badge.svg) badge above for current status.
+
+### Test Documentation
+
+For comprehensive testing documentation, see:
+- **[TESTING.md](docs/TESTING.md)** - Complete testing guide with examples and best practices
+
+## 🔄 CI/CD Pipeline
+
+This project uses **GitHub Actions** for automated testing and deployment:
+
+### Workflows
+
+1. **Tests Workflow** (`.github/workflows/tests.yml`)
+   - ✅ Linting with flake8 and black
+   - ✅ Unit tests with pytest
+   - ✅ Integration tests
+   - ✅ Code coverage reports
+   - ✅ Quality checks (mypy, bandit, safety)
+   - ✅ Build verification
+
+2. **Deploy to Vercel** (`.github/workflows/deploy-vercel.yml`)
+   - 🚀 Automatic deployment to production
+   - ⛔ **Blocked if tests fail**
+   - ✅ Only deploys after successful test completion
+
+### How It Works
+
+```
+Push to master → Run Tests → Tests Pass? → Deploy to Vercel
+                                    ↓
+                              Tests Fail → Block Deploy ❌
+```
+
+### Setup Vercel CI/CD
+
+To enable automatic deployment with test validation:
+
+1. **Quick Setup**: Follow [`docs/VERCEL_QUICK_SETUP.md`](docs/VERCEL_QUICK_SETUP.md)
+2. **Complete Guide**: See [`docs/VERCEL_CI_CD.md`](docs/VERCEL_CI_CD.md) for detailed configuration
+
+**Required GitHub Secrets**:
+- `VERCEL_TOKEN` - Vercel authentication token
+- `VERCEL_ORG_ID` - Your Vercel organization ID
+- `VERCEL_PROJECT_ID` - Your Vercel project ID
+
+### Benefits
+
+- ✅ **No broken deployments** - Code must pass all tests first
+- ✅ **Automated workflow** - No manual intervention needed
+- ✅ **Fast feedback** - Know immediately if something breaks
+- ✅ **Code quality** - Automated linting and security checks
+
 ### Code Coverage
 
 Coverage reports are generated automatically and uploaded to Codecov. View detailed coverage:
