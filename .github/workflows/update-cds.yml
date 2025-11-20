@@ -38,6 +38,7 @@ jobs:
           # Secrets configurados no GitHub (Settings > Secrets and variables > Actions)
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           BETTERSTACK_SOURCE_TOKEN: ${{ secrets.BETTERSTACK_SOURCE_TOKEN }}
+          BETTERSTACK_INGESTING_HOST: ${{ secrets.BETTERSTACK_INGESTING_HOST }}
           
           # Configurações opcionais (podem ser sobrescritas via secrets se necessário)
           ENVIRONMENT: production
