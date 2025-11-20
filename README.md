@@ -2,6 +2,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com/)
+[![Tests](https://github.com/ideiasfactory/brazillian_cds_datafeeder_v2/actions/workflows/tests.yml/badge.svg)](https://github.com/ideiasfactory/brazillian_cds_datafeeder_v2/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/gh/ideiasfactory/brazillian_cds_datafeeder_v2/branch/master/graph/badge.svg)](https://codecov.io/gh/ideiasfactory/brazillian_cds_datafeeder_v2)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black.svg)](https://vercel.com)
 [![API Status](https://img.shields.io/badge/API-Live-success.svg)](https://brazillian-cds-datafeeder-v2.vercel.app/)
@@ -227,13 +229,78 @@ app.include_router(my_router)
 
 ## 🧪 Testing
 
+### Running Tests
+
 ```bash
-# Run tests (when test suite is added)
+# Install test dependencies
+pip install -r requirements.txt
+
+# Run all tests
 pytest
 
-# Check code style
-flake8 .
-black --check .
+# Run only unit tests
+pytest tests/unit -v -m unit
+
+# Run only integration tests
+pytest tests/integration -v -m integration
+
+# Run with coverage report
+pytest --cov=src --cov-report=html --cov-report=term
+
+# Run specific test file
+pytest tests/unit/test_auth.py -v
+
+# Run tests in parallel (faster)
+pytest -n auto
+```
+
+### Test Structure
+
+```
+tests/
+├── conftest.py              # Shared fixtures and configuration
+├── unit/                    # Unit tests (fast, isolated)
+│   ├── test_auth.py        # Authentication tests
+│   └── test_models.py      # Model tests
+└── integration/             # Integration tests (API endpoints)
+    └── test_api_endpoints.py
+```
+
+### Writing Tests
+
+Tests use pytest with async support. Example:
+
+```python
+import pytest
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_my_function(test_session):
+    result = await my_async_function()
+    assert result is not None
+```
+
+### Continuous Integration
+
+Tests run automatically on:
+- Every push to `main`/`master`/`develop` branches
+- Every pull request
+- Multiple Python versions (3.11, 3.12)
+
+See [`.github/workflows/tests.yml`](.github/workflows/tests.yml) for CI configuration.
+
+### Code Coverage
+
+Coverage reports are generated automatically and uploaded to Codecov. View detailed coverage:
+
+```bash
+# Generate HTML coverage report
+pytest --cov=src --cov-report=html
+
+# Open in browser
+open htmlcov/index.html  # macOS
+start htmlcov/index.html  # Windows
+xdg-open htmlcov/index.html  # Linux
 ```
 
 ## 📦 Dependencies
