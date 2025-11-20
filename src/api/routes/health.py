@@ -1,6 +1,8 @@
 from datetime import datetime
 from time import time
 from typing import Optional
+import os
+from pathlib import Path
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
@@ -8,6 +10,8 @@ from fastapi.responses import JSONResponse
 from ..models.health import HealthResponse, DatabaseStatus
 from src.config import settings
 from src.logging_config import get_logger, log_with_context
+from src.database.connection import get_async_session
+from src.database.repositories.cds_repository import CDSRepository
 
 # Initialize logger
 logger = get_logger(__name__)
@@ -28,59 +32,152 @@ log_with_context(
 
 async def get_database_status() -> DatabaseStatus:
     """
-    Check database connection and gather status information.
+    Check database connection and gather CDS data status information.
     
-    This function should be customized based on your actual database implementation.
+    For production (database): queries the database for statistics
+    For development (CSV): checks CSV file modification time
     """
-    # TODO: Implement actual database health check
-    # This is a placeholder implementation
-    try:
-        log_with_context(
-            logger,
-            'debug',
-            'Starting database health check'
-        )
-        
-        # Add your database connection check here
-        # For example:
-        # async with get_db_connection() as conn:
-        #     result = await conn.fetchone("SELECT COUNT(*) FROM cds_data")
-        #     records_count = result[0]
-        
-        db_status = DatabaseStatus(
-            connected=True,
-            type="postgresql",  # or "csv" based on your configuration
-            latency_ms=None,  # Calculate actual latency
-            records_count=None,  # Get from database
-            last_updated=None  # Get from database
-        )
-        
-        log_with_context(
-            logger,
-            'info',
-            'Database health check successful',
-            connected=db_status.connected,
-            db_type=db_status.type
-        )
-        
-        return db_status
-        
-    except Exception as e:
-        log_with_context(
-            logger,
-            'error',
-            'Database health check failed',
-            error=str(e),
-            error_type=type(e).__name__
-        )
-        
-        return DatabaseStatus(
-            connected=False,
-            type="unknown",
-            latency_ms=None,
-            records_count=None,
-            last_updated=None
-        )
+    use_database = bool(settings.database_url and settings.environment == "production")
+    
+    if use_database:
+        # Database mode - get info from repository
+        try:
+            log_with_context(
+                logger,
+                'debug',
+                'Starting database health check'
+            )
+            
+            start_time = time()
+            
+            async with get_async_session() as session:
+                repo = CDSRepository(session)
+                
+                # Get statistics
+                stats = await repo.get_statistics()
+                records_count = stats.get('total_records', 0)
+                
+                # Get latest record for last_updated
+                latest_records = await repo.get_latest(limit=1)
+                last_updated = None
+                if latest_records:
+                    # Use the updated_at timestamp from the latest record
+                    # Extract the actual datetime value from the SQLAlchemy column
+                    updated_at_value = latest_records[0].updated_at
+                    last_updated = updated_at_value if isinstance(updated_at_value, datetime) else None
+            
+            latency = round((time() - start_time) * 1000, 2)  # Convert to ms
+            
+            db_status = DatabaseStatus(
+                connected=True,
+                type="postgresql",
+                latency_ms=latency,
+                records_count=records_count,
+                last_updated=last_updated
+            )
+            
+            log_with_context(
+                logger,
+                'info',
+                'Database health check successful',
+                connected=db_status.connected,
+                db_type=db_status.type,
+                records_count=records_count,
+                latency_ms=latency
+            )
+            
+            return db_status
+            
+        except Exception as e:
+            log_with_context(
+                logger,
+                'error',
+                'Database health check failed',
+                error=str(e),
+                error_type=type(e).__name__
+            )
+            
+            return DatabaseStatus(
+                connected=False,
+                type="postgresql",
+                latency_ms=None,
+                records_count=None,
+                last_updated=None
+            )
+    else:
+        # CSV mode - check file modification time
+        try:
+            log_with_context(
+                logger,
+                'debug',
+                'Starting CSV file health check'
+            )
+            
+            csv_path = os.getenv("CSV_OUTPUT_PATH", "data/brasil_CDS_historical.csv")
+            csv_file = Path(csv_path)
+            
+            if csv_file.exists():
+                # Get file modification time
+                mtime = csv_file.stat().st_mtime
+                last_updated = datetime.fromtimestamp(mtime)
+                
+                # Count lines in CSV (excluding header)
+                try:
+                    with open(csv_file, 'r') as f:
+                        records_count = sum(1 for _ in f) - 1  # Subtract header
+                except Exception:
+                    records_count = None
+                
+                db_status = DatabaseStatus(
+                    connected=True,
+                    type="csv",
+                    latency_ms=None,
+                    records_count=records_count,
+                    last_updated=last_updated
+                )
+                
+                log_with_context(
+                    logger,
+                    'info',
+                    'CSV file health check successful',
+                    connected=True,
+                    csv_path=str(csv_file),
+                    records_count=records_count
+                )
+                
+                return db_status
+            else:
+                log_with_context(
+                    logger,
+                    'warning',
+                    'CSV file not found',
+                    csv_path=str(csv_file)
+                )
+                
+                return DatabaseStatus(
+                    connected=False,
+                    type="csv",
+                    latency_ms=None,
+                    records_count=0,
+                    last_updated=None
+                )
+                
+        except Exception as e:
+            log_with_context(
+                logger,
+                'error',
+                'CSV file health check failed',
+                error=str(e),
+                error_type=type(e).__name__
+            )
+            
+            return DatabaseStatus(
+                connected=False,
+                type="csv",
+                latency_ms=None,
+                records_count=None,
+                last_updated=None
+            )
 
 
 @router.get("/", response_model=HealthResponse, summary="Health Check")

@@ -93,9 +93,40 @@ class StructuredFormatter(JsonFormatter):
         if record.exc_info:
             log_record['exception'] = self.formatException(record.exc_info)
         
-        # Add custom context if present
+        # Extract and flatten context data for better visibility in logs
         if hasattr(record, 'context'):
-            log_record['context'] = getattr(record, 'context')
+            context = getattr(record, 'context')
+            if isinstance(context, dict):
+                # Extract correlation_id to top level for better visibility
+                if 'correlation_id' in context:
+                    log_record['correlation_id'] = context['correlation_id']
+                
+                # Extract other important fields to top level
+                important_fields = [
+                    'invalid_value', 'param_name', 'error_type', 
+                    'query_params', 'validation_errors', 'status_code',
+                    'path', 'method', 'data_inicial', 'data_final'
+                ]
+                
+                for field in important_fields:
+                    if field in context:
+                        log_record[field] = context[field]
+                
+                # Keep full context for reference
+                log_record['context'] = context
+        
+        # Format message to include correlation_id and key data if available
+        original_message = log_record.get('message', '')
+        correlation_id = log_record.get('correlation_id')
+        
+        if correlation_id:
+            # Add correlation_id to message for easier searching
+            log_record['message'] = f"[{correlation_id}] {original_message}"
+        
+        # Add invalid data to message if present
+        if 'invalid_value' in log_record and 'param_name' in log_record:
+            param_info = f" | {log_record['param_name']}='{log_record['invalid_value']}'"
+            log_record['message'] = log_record['message'] + param_info
 
 
 def setup_logging() -> logging.Logger:
@@ -121,8 +152,27 @@ def setup_logging() -> logging.Logger:
             '%(timestamp)s %(level)s %(name)s %(message)s'
         )
     else:
-        # Use readable formatting in development
-        formatter = logging.Formatter(
+        # Use readable formatting in development with correlation_id
+        class ContextFormatter(logging.Formatter):
+            def format(self, record):
+                # Extract correlation_id from context if available
+                correlation_id = ''
+                context = getattr(record, 'context', None)
+                if context and isinstance(context, dict):
+                    cid = context.get('correlation_id')
+                    if cid:
+                        correlation_id = f'[{cid[:8]}] '
+                
+                # Add correlation_id to the message
+                original_format = self._style._fmt
+                if correlation_id:
+                    self._style._fmt = original_format.replace('%(message)s', f'{correlation_id}%(message)s')
+                
+                result = super().format(record)
+                self._style._fmt = original_format
+                return result
+        
+        formatter = ContextFormatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
         )

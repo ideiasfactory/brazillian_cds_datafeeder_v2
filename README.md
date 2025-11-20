@@ -12,10 +12,12 @@ A production-ready FastAPI application that scrapes, stores, and serves Brazilia
 ## 🚀 Features
 
 - **FastAPI Framework**: Modern, fast async web framework
-- **Automated Data Collection**: Scheduled scraping from Investing.com
+- **Automated Data Collection**: Script-based scraping from Investing.com
 - **Dual Storage**: CSV for development, PostgreSQL for production
 - **RESTful API**: Clean endpoints with OpenAPI documentation
+- **Standardized Responses**: All endpoints return consistent structure with correlation IDs
 - **Health Monitoring**: Kubernetes-ready liveness and readiness probes
+- **BetterStack Logging**: Structured logging with correlation tracking
 - **Serverless Deployment**: Optimized for Vercel
 
 ## 📁 Project Structure
@@ -23,13 +25,20 @@ A production-ready FastAPI application that scrapes, stores, and serves Brazilia
 ```
 .
 ├── main.py                 # FastAPI application entry point
+├── scripts/
+│   ├── update_cds_data.py # CLI script for data updates
+│   └── SCHEDULING.md      # Comprehensive scheduling guide
 ├── src/
+│   ├── logging_config.py  # BetterStack structured logging
+│   ├── config.py          # Configuration management
 │   └── api/
 │       ├── index.py       # Vercel ASGI entry point
 │       ├── models/        # Pydantic data models
+│       │   ├── cds.py     # CDS API standardized responses
 │       │   ├── health.py  # Health check models
 │       │   └── home.py    # Home page models
 │       └── routes/        # API route handlers
+│           ├── cds.py     # CDS data endpoints with correlation IDs
 │           ├── health.py  # Health endpoints
 │           └── home.py    # Home page routes
 ├── public/
@@ -131,9 +140,18 @@ Set in Vercel dashboard:
 - `GET /api/home/data` - Structured home page data (JSON)
 
 ### Health Monitoring
+
 - `GET /health` - Comprehensive health check
 - `GET /health/liveness` - Simple liveness probe
 - `GET /health/readiness` - Readiness probe (checks database)
+
+### CDS Data
+
+- `GET /api/cds/latest` - Get most recent CDS record
+- `GET /api/cds` - List CDS records with optional date filtering
+- `GET /api/cds/statistics` - Get statistical summary
+
+All CDS endpoints return standardized responses with correlation IDs for request tracking.
 
 ### Documentation
 - `GET /docs` - Interactive Swagger UI
@@ -186,6 +204,21 @@ black --check .
 - **fastapi** >= 0.115.0 - Web framework
 - **uvicorn** >= 0.30.0 - ASGI server
 - **pydantic** >= 2.0.0 - Data validation
+- **sqlalchemy** >= 2.0.0 - Database ORM (async)
+- **psycopg** - PostgreSQL driver for async operations
+- **logtail-python** - BetterStack logging integration
+
+## ⏰ Scheduling Data Updates
+
+CDS data is updated via the `scripts/update_cds_data.py` CLI script. **Never expose data updates via REST endpoints** for security.
+
+See **[scripts/SCHEDULING.md](scripts/SCHEDULING.md)** for comprehensive scheduling guides including:
+
+- Linux cron and systemd timers
+- GitHub Actions workflows
+- Windows Task Scheduler
+- Docker + cron
+- Cloud schedulers (AWS, GCP, Azure)
 
 ## 🤝 Contributing
 

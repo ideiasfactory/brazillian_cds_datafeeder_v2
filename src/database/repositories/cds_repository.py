@@ -259,6 +259,7 @@ class CDSRepository:
         records_inserted: int = 0,
         records_updated: int = 0,
         source: str = "investing.com",
+        trigger: str = "manual",
         error_message: Optional[str] = None
     ) -> DataUpdateLog:
         """
@@ -270,6 +271,7 @@ class CDSRepository:
             records_inserted: Number of records inserted
             records_updated: Number of records updated
             source: Data source identifier
+            trigger: Trigger source (manual, github-actions-scheduler, api, etc.)
             error_message: Error message if applicable
             
         Returns:
@@ -281,6 +283,7 @@ class CDSRepository:
             records_inserted=records_inserted,
             records_updated=records_updated,
             source=source,
+            trigger=trigger,
             error_message=error_message
         )
         
@@ -289,7 +292,7 @@ class CDSRepository:
         await self.session.refresh(log_entry)
         
         logger.info(
-            f"Update log created: status={status}, "
+            f"Update log created: status={status}, trigger={trigger}, "
             f"fetched={records_fetched}, inserted={records_inserted}, "
             f"updated={records_updated}"
         )

@@ -362,27 +362,58 @@ async def async_main():
     # Determine if using database or CSV
     use_database = bool(settings.database_url and settings.environment == "production")
     
+    # Get trigger source from environment (default: manual)
+    trigger = os.getenv("UPDATE_TRIGGER", "manual")
+    
     if use_database:
         logger.info("Using database storage (production mode)")
     else:
         logger.info("Using CSV storage (development mode)")
 
+    # Log start of update process
+    started_at = datetime.now()
+    logger.info(f"Starting CDS data update (trigger={trigger}, started_at={started_at.isoformat()})")
+
     try:
         df_new = fetch_investing_cds()
         logger.info(f"Fetched {len(df_new)} records from Investing.com")
+        
+        if use_database:
+            # Database mode
+            await save_to_database(df_new, trigger=trigger, started_at=started_at)
+        else:
+            # CSV mode
+            save_to_csv(df_new)
+            
+        logger.success(f"CDS data update completed successfully (trigger={trigger})")
+        
     except Exception as e:
-        logger.error(f"Falha ao capturar a tabela do Investing: {e}")
-        return
+        error_message = str(e)
+        logger.error(f"CDS data update failed (trigger={trigger}): {error_message}")
+        
+        # Log failure to database if possible
+        if use_database:
+            try:
+                async with get_async_session() as session:
+                    repo = CDSRepository(session)
+                    await repo.log_update(
+                        status="error",
+                        records_fetched=0,
+                        source="investing.com",
+                        trigger=trigger,
+                        error_message=error_message
+                    )
+            except Exception as log_error:
+                logger.error(f"Failed to log error to database: {log_error}")
+        
+        # Re-raise to ensure exit code is non-zero
+        raise
 
-    if use_database:
-        # Database mode
-        await save_to_database(df_new)
-    else:
-        # CSV mode
-        save_to_csv(df_new)
-
-async def save_to_database(df_new: pd.DataFrame) -> None:
+async def save_to_database(df_new: pd.DataFrame, trigger: str = "manual", started_at: Optional[datetime] = None) -> None:
     """Save data to database using repository."""
+    if started_at is None:
+        started_at = datetime.now()
+    
     try:
         async with get_async_session() as session:
             repo = CDSRepository(session)
@@ -403,18 +434,20 @@ async def save_to_database(df_new: pd.DataFrame) -> None:
             # Bulk insert with upsert
             result = await repo.bulk_insert(records, source="investing.com", skip_duplicates=False)
             
-            # Log the update
+            # Log the successful update with trigger information
             await repo.log_update(
                 status="success",
                 records_fetched=len(df_new),
                 records_inserted=result["inserted"],
                 records_updated=result["updated"],
-                source="investing.com"
+                source="investing.com",
+                trigger=trigger
             )
             
             logger.success(
                 f"Database updated: {result['inserted']} inserted, "
-                f"{result['updated']} updated, {result['skipped']} skipped"
+                f"{result['updated']} updated, {result['skipped']} skipped "
+                f"(trigger={trigger})"
             )
             
             # Show statistics
@@ -425,7 +458,7 @@ async def save_to_database(df_new: pd.DataFrame) -> None:
             )
     except Exception as e:
         logger.error(f"Error saving to database: {e}")
-        # Try to log the error
+        # Try to log the error with trigger information
         try:
             async with get_async_session() as session:
                 repo = CDSRepository(session)
@@ -433,6 +466,7 @@ async def save_to_database(df_new: pd.DataFrame) -> None:
                     status="error",
                     records_fetched=len(df_new),
                     source="investing.com",
+                    trigger=trigger,
                     error_message=str(e)
                 )
         except Exception:

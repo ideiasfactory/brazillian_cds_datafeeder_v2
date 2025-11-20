@@ -29,11 +29,5 @@
     "LOG_LEVEL": "INFO",
     "BETTERSTACK_SOURCE_TOKEN": "@betterstack_source_token",
     "BETTERSTACK_INGESTING_HOST": "@betterstack_ingesting_host"
-  },
-  "crons": [
-    {
-      "path": "/api/cron/update-cds",
-      "schedule": "0 12 * * *"
-    }
-  ]
+  }
 }
