@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, FileResponse
 
 from ..models.home import HomePageData, FeatureInfo, EndpointInfo
@@ -103,7 +103,6 @@ def render_home_page(data: HomePageData) -> str:
             if path.exists():
                 with open(path, "r", encoding="utf-8") as f:
                     html_content = f.read()
-                    template_path = path
                     log_with_context(
                         logger,
                         "info",
@@ -153,9 +152,16 @@ def render_home_page(data: HomePageData) -> str:
                     box-shadow: 0 8px 32px rgba(0,0,0,0.1);
                 }}
                 h1 {{ color: #2d3748; margin-bottom: 10px; }}
-                .version {{ background: #667eea; color: white; padding: 4px 12px; border-radius: 12px; font-size: 14px; }}
+                .version {{
+                    background: #667eea; color: white; padding: 4px 12px;
+                    border-radius: 12px; font-size: 14px;
+                }}
                 .links {{ margin-top: 30px; }}
-                .link {{ display: inline-block; margin: 10px 10px 10px 0; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; }}
+                .link {{
+                    display: inline-block; margin: 10px 10px 10px 0;
+                    padding: 10px 20px; background: #667eea; color: white;
+                    text-decoration: none; border-radius: 6px;
+                }}
                 .link:hover {{ background: #764ba2; }}
             </style>
         </head>

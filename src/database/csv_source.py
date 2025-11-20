@@ -1,7 +1,7 @@
 """CSV Data Source for local development."""
 
 import os
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 import pandas as pd

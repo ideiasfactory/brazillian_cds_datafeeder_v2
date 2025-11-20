@@ -1,6 +1,5 @@
 from datetime import datetime
 from time import time
-from typing import Optional
 import os
 from pathlib import Path
 

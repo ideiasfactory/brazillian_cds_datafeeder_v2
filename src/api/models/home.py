@@ -27,9 +27,14 @@ class HomePageData(BaseModel):
     )
     version: str = Field(..., description="API version")
     environment: str = Field(..., description="Deployment environment")
-    environment_class: str = Field(..., description="CSS class for environment badge")
+    environment_class: str = Field(
+        ..., description="CSS class for environment badge"
+    )
     description: str = Field(
-        default="A production-ready FastAPI application that scrapes, stores, and serves Brazilian CDS 5-year historical data.",
+        default=(
+            "A production-ready FastAPI application that scrapes, stores, "
+            "and serves Brazilian CDS 5-year historical data."
+        ),
         description="Main description text",
     )
     features: List[FeatureInfo] = Field(

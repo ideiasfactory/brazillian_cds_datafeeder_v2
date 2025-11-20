@@ -2,7 +2,6 @@
 
 import pytest
 import secrets
-from fastapi import HTTPException
 
 from src.database.repositories.api_key_repository import APIKeyRepository
 

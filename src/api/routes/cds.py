@@ -1,7 +1,7 @@
 """CDS data API endpoints."""
 
 from datetime import date, datetime, timedelta
-from typing import Optional, List
+from typing import Optional
 import uuid
 from fastapi import APIRouter, HTTPException, Query, Depends, status, Request
 
@@ -222,7 +222,7 @@ async def get_cds_records(
     # Validate order parameter
     if order not in ["asc", "desc"]:
         logger.warning(
-            f"Invalid order parameter received",
+            "Invalid order parameter received",
             extra={
                 "correlation_id": correlation_id,
                 "param_name": "order",
@@ -264,7 +264,7 @@ async def get_cds_records(
     # Validate date range
     if start_date and end_date and start_date > end_date:
         logger.warning(
-            f"Invalid date range: data_inicial is after data_final",
+            "Invalid date range: data_inicial is after data_final",
             extra={
                 "correlation_id": correlation_id,
                 "data_inicial": start_date.isoformat(),
@@ -393,7 +393,10 @@ async def get_cds_statistics(
     "/info",
     response_model=StandardResponse,
     summary="Get CDS Schema Information",
-    description="Get CDS data schema documentation and optional statistics. **Public endpoint - no authentication required.**",
+    description=(
+        "Get CDS data schema documentation and optional statistics. "
+        "**Public endpoint - no authentication required.**"
+    ),
     responses={
         200: {"description": "Schema information retrieved successfully"},
         500: {"description": "Internal server error"},

@@ -1,8 +1,8 @@
 """CDS Data Repository for database operations."""
 
-from datetime import date, datetime
+from datetime import date
 from typing import Optional, List, Dict, Any
-from sqlalchemy import select, func, and_, or_, desc, asc
+from sqlalchemy import select, func, and_, desc, asc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from loguru import logger

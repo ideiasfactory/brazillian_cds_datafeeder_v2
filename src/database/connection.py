@@ -186,12 +186,12 @@ def get_async_session_factory() -> async_sessionmaker:
 
 
 @contextmanager
-def get_session() -> Generator[Session, None, None]:
+def get_sync_session() -> Generator[Session, None, None]:
     """
     Context manager for synchronous database session.
 
     Usage:
-        with get_session() as session:
+        with get_sync_session() as session:
             # Use session
             session.query(CDSRecord).all()
     """
@@ -211,9 +211,9 @@ def get_session() -> Generator[Session, None, None]:
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """
     FastAPI dependency for asynchronous database session.
-    
+
     This function is used as a FastAPI dependency and can be overridden in tests.
-    
+
     Usage:
         @app.get("/endpoint")
         async def endpoint(session: AsyncSession = Depends(get_session)):

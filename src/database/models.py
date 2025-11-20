@@ -4,8 +4,7 @@ Database models for Brazilian CDS Data Feeder.
 SQLAlchemy ORM models for storing CDS historical data.
 """
 
-from datetime import datetime, date
-from typing import Optional
+from datetime import datetime
 
 from sqlalchemy import (
     Column,
@@ -38,7 +37,7 @@ class CDSRecord(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
 
     # Date (indexed for fast lookups)
-    date = Column(Date, unique=True, nullable=False, index=True)
+    record_date = Column("date", Date, unique=True, nullable=False, index=True)
 
     # OHLC Data (all in basis points)
     open = Column(Float, nullable=True)

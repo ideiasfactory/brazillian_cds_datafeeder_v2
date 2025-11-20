@@ -3,7 +3,6 @@ Configuration module for Brazilian CDS Data Feeder API.
 Loads and validates environment variables from .env files.
 """
 
-import os
 from functools import lru_cache
 from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict

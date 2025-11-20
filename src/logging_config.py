@@ -7,7 +7,7 @@ import logging
 import sys
 import json
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from pythonjsonlogger.json import JsonFormatter
 import requests
 from functools import wraps
@@ -287,7 +287,11 @@ def log_request(func):
             log_with_context(
                 logger,
                 "info",
-                f"Request completed: {request_context.get('method', 'UNKNOWN')} {request_context.get('path', func.__name__)}",
+                (
+                    f"Request completed: "
+                    f"{request_context.get('method', 'UNKNOWN')} "
+                    f"{request_context.get('path', func.__name__)}"
+                ),
                 **request_context,
             )
 
@@ -302,7 +306,11 @@ def log_request(func):
             log_with_context(
                 logger,
                 "error",
-                f"Request failed: {request_context.get('method', 'UNKNOWN')} {request_context.get('path', func.__name__)}",
+                (
+                    f"Request failed: "
+                    f"{request_context.get('method', 'UNKNOWN')} "
+                    f"{request_context.get('path', func.__name__)}"
+                ),
                 **request_context,
             )
 
