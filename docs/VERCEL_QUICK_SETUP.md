@@ -33,11 +33,17 @@ Adicione estes 3 secrets:
 
 ### 4. Desabilitar Deploy Automático da Vercel
 
-**✅ Já configurado!** O arquivo `vercel.json` já contém:
+**✅ Já configurado!** O projeto usa um script `vercel-ignore-build.sh` que:
+
+- 🚫 **Ignora builds** nos branches `master` e `main`
+- ✅ **Permite builds** em outros branches (para previews de PRs)
+
+O `vercel.json` está configurado com:
 
 ```json
 {
-  "github": {
+  "ignoreCommand": "bash scripts/vercel-ignore-build.sh",
+  "git": {
     "deploymentEnabled": {
       "master": false,
       "main": false
@@ -46,7 +52,7 @@ Adicione estes 3 secrets:
 }
 ```
 
-Isso desabilita o deploy automático da Vercel para os branches master/main, permitindo que apenas o GitHub Actions faça o deploy.
+Isso garante que apenas o GitHub Actions faça deploys em produção!
 
 ### 5. Commit e Push
 
