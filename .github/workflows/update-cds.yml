@@ -1,9 +1,9 @@
 name: Update CDS Data
 
 on:
-  # Executa automaticamente todos os dias às 06:00 UTC (03:00 em São Paulo)
+  # Executa automaticamente de segunda a sexta-feira às 06:00 UTC (03:00 em São Paulo)
   schedule:
-    - cron: '0 6 * * *'  # Diariamente às 06:00 UTC (03:00 BRT)
+    - cron: '0 6 * * 1-5'  # Segunda a sexta às 06:00 UTC (03:00 BRT)
   
   # Permite execução manual via GitHub Actions UI
   workflow_dispatch:

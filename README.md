@@ -21,7 +21,7 @@ A production-ready FastAPI application that scrapes, stores, and serves Brazilia
 ## 🚀 Features
 
 - **FastAPI Framework**: Modern, fast async web framework
-- **Automated Data Collection**: Script-based scraping from Investing.com
+- **Automated Data Collection**: Weekday automated scraping from Investing.com (Mon-Fri at 06:00 UTC)
 - **Dual Storage**: CSV for development, PostgreSQL for production
 - **RESTful API**: Clean endpoints with OpenAPI documentation
 - **API Key Authentication**: Secure API access with database-managed keys
@@ -367,12 +367,12 @@ xdg-open htmlcov/index.html  # Linux
 
 ## ⏰ Scheduling Data Updates
 
-CDS data is updated via the `scripts/update_cds_data.py` CLI script. **Never expose data updates via REST endpoints** for security.
+CDS data is **automatically updated Monday through Friday at 06:00 UTC (03:00 BRT)** via GitHub Actions workflow. The `scripts/update_cds_data.py` CLI script can also be run manually. **Never expose data updates via REST endpoints** for security.
 
 See **[scripts/SCHEDULING.md](scripts/SCHEDULING.md)** for comprehensive scheduling guides including:
 
+- GitHub Actions workflows (✅ currently active - weekday schedule)
 - Linux cron and systemd timers
-- GitHub Actions workflows
 - Windows Task Scheduler
 - Docker + cron
 - Cloud schedulers (AWS, GCP, Azure)
