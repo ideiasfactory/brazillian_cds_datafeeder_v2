@@ -2,8 +2,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com/)
-[![Tests](https://github.com/ideiasfactory/brazillian_cds_datafeeder_v2/actions/workflows/tests.yml/badge.svg)](https://github.com/ideiasfactory/brazillian_cds_datafeeder_v2/actions/workflows/tests.yml)
-[![codecov](https://codecov.io/gh/ideiasfactory/brazillian_cds_datafeeder_v2/branch/master/graph/badge.svg)](https://codecov.io/gh/ideiasfactory/brazillian_cds_datafeeder_v2)
+[![Tests](https://github.com/ideiasfactory/brazillian_cds_datafeeder_v2/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/ideiasfactory/brazillian_cds_datafeeder_v2/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/gh/ideiasfactory/brazillian_cds_datafeeder_v2/branch/master/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/ideiasfactory/brazillian_cds_datafeeder_v2)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black.svg)](https://vercel.com)
 [![API Status](https://img.shields.io/badge/API-Live-success.svg)](https://brazillian-cds-datafeeder-v2.vercel.app/)
