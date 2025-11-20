@@ -1,0 +1,52 @@
+name: Deploy to Vercel
+
+on:
+  workflow_run:
+    workflows: ["Tests"]
+    types:
+      - completed
+    branches: [ master, main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Só executa se o workflow de testes passou
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Vercel CLI
+      run: npm install --global vercel@latest
+
+    - name: Pull Vercel Environment Information
+      run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      env:
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    - name: Build Project Artifacts
+      run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      env:
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    - name: Deploy Project Artifacts to Vercel
+      run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+      env:
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    - name: Deployment Summary
+      run: |
+        echo "## Deployment Status :rocket:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Successfully deployed to Vercel Production" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "Workflow: ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "Tests completed successfully before deployment" >> $GITHUB_STEP_SUMMARY
