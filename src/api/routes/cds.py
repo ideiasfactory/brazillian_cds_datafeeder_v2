@@ -143,7 +143,7 @@ async def get_latest_cds(request: Request, api_key_name: str = Depends(verify_ap
 
             latest_record = records[0]
             logger.info(
-                f"Retrieved latest CDS record: {latest_record.date}",
+                f"Retrieved latest CDS record: {latest_record.record_date}",
                 extra={"correlation_id": correlation_id},
             )
 
@@ -291,7 +291,7 @@ async def get_cds_records(
 
             date_range_info = None
             if records:
-                dates = [r.date for r in records]
+                dates = [r.record_date for r in records]
                 date_range_info = {
                     "earliest": min(dates).isoformat(),
                     "latest": max(dates).isoformat(),

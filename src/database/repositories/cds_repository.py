@@ -36,7 +36,7 @@ class CDSRepository:
         Returns:
             CDSRecord if found, None otherwise
         """
-        stmt = select(CDSRecord).where(CDSRecord.date == record_date)
+        stmt = select(CDSRecord).where(CDSRecord.record_date == record_date)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -50,7 +50,7 @@ class CDSRepository:
         Returns:
             List of CDSRecord ordered by date descending
         """
-        stmt = select(CDSRecord).order_by(desc(CDSRecord.date)).limit(limit)
+        stmt = select(CDSRecord).order_by(desc(CDSRecord.record_date)).limit(limit)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
@@ -75,9 +75,9 @@ class CDSRepository:
 
         conditions = []
         if start_date:
-            conditions.append(CDSRecord.date >= start_date)
+            conditions.append(CDSRecord.record_date >= start_date)
         if end_date:
-            conditions.append(CDSRecord.date <= end_date)
+            conditions.append(CDSRecord.record_date <= end_date)
 
         if conditions:
             stmt = stmt.where(and_(*conditions))
@@ -136,7 +136,7 @@ class CDSRepository:
         await self.session.commit()
 
         record = result.scalar_one()
-        logger.debug(f"Upserted CDS record for date {record.date}")
+        logger.debug(f"Upserted CDS record for date {record.record_date}")
         return record
 
     async def bulk_insert(
@@ -226,8 +226,8 @@ class CDSRepository:
 
         # Earliest and latest dates
         date_stmt = select(
-            func.min(CDSRecord.date).label("earliest"),
-            func.max(CDSRecord.date).label("latest"),
+            func.min(CDSRecord.record_date).label("earliest"),
+            func.max(CDSRecord.record_date).label("latest"),
         )
         date_result = await self.session.execute(date_stmt)
         dates = date_result.one()
@@ -321,7 +321,10 @@ class CDSRepository:
         from sqlalchemy import delete
 
         stmt = delete(CDSRecord).where(
-            and_(CDSRecord.date >= start_date, CDSRecord.date <= end_date)
+            and_(
+                CDSRecord.record_date >= start_date,
+                CDSRecord.record_date <= end_date,
+            )
         )
 
         result = await self.session.execute(stmt)

@@ -64,18 +64,25 @@ class CDSRecord(Base):
 
     # Indexes for performance
     __table_args__ = (
-        Index("idx_date_desc", date.desc()),  # For latest data queries
-        Index("idx_date_range", date),  # For date range queries
+        Index("idx_date_desc", record_date.desc()),  # For latest data queries
+        Index("idx_date_range", record_date),  # For date range queries
     )
 
     def __repr__(self) -> str:
-        return f"<CDSRecord(date={self.date}, close={self.close}, change_pct={self.change_pct})>"
+        return (
+            f"<CDSRecord(date={self.record_date}, close={self.close}, "
+            f"change_pct={self.change_pct})>"
+        )
 
     def to_dict(self) -> dict:
         """Convert model to dictionary for API responses."""
         return {
             "id": self.id,
-            "date": self.date.isoformat() if self.date is not None else None,
+            "date": (
+                self.record_date.isoformat()
+                if self.record_date is not None
+                else None
+            ),
             "open": self.open,
             "high": self.high,
             "low": self.low,
