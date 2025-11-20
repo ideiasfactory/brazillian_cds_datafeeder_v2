@@ -32,10 +32,13 @@
     "enabled": true,
     "autoAlias": true,
     "silent": false,
-    "autoJobCancelation": true,
+    "autoJobCancelation": true
+  },
+  "git": {
     "deploymentEnabled": {
       "master": false,
       "main": false
     }
-  }
+  },
+  "ignoreCommand": "bash scripts/vercel-ignore-build.sh"
 }
