@@ -47,10 +47,37 @@ jobs:
           # Indica que foi executado via GitHub Actions scheduler
           UPDATE_TRIGGER: github-actions-scheduler
           
+          # Force CSV update even in production to commit to Git
+          FORCE_CSV_UPDATE: "true"
+          
           # Configurações de scraping (valores padrão já estão no código)
           INVESTING_URL: "https://br.investing.com/rates-bonds/brazil-cds-5-years-usd-historical-data"
           REQUEST_TIMEOUT: "20"
           REQUEST_RETRIES: "3"
+      
+      - name: Check for CSV changes
+        id: check_changes
+        run: |
+          if git diff --quiet data/brasil_CDS_historical.csv; then
+            echo "csv_changed=false" >> $GITHUB_OUTPUT
+            echo "No changes detected in CSV file"
+          else
+            echo "csv_changed=true" >> $GITHUB_OUTPUT
+            echo "Changes detected in CSV file"
+          fi
+      
+      - name: Commit and push CSV changes
+        if: steps.check_changes.outputs.csv_changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add data/brasil_CDS_historical.csv
+          git commit -m "chore: update CDS historical data [skip ci]
+          
+          - Updated by GitHub Actions workflow
+          - Trigger: ${{ github.event_name }}
+          - Timestamp: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          git push
       
       - name: Upload logs on failure
         if: failure()

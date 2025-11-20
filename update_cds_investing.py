@@ -365,8 +365,13 @@ async def async_main():
     # Get trigger source from environment (default: manual)
     trigger = os.getenv("UPDATE_TRIGGER", "manual")
     
+    # Check if CSV update is forced (for Git versioning)
+    force_csv = os.getenv("FORCE_CSV_UPDATE", "false").lower() == "true"
+    
     if use_database:
         logger.info("Using database storage (production mode)")
+        if force_csv:
+            logger.info("CSV update also enabled (FORCE_CSV_UPDATE=true)")
     else:
         logger.info("Using CSV storage (development mode)")
 
@@ -381,8 +386,13 @@ async def async_main():
         if use_database:
             # Database mode
             await save_to_database(df_new, trigger=trigger, started_at=started_at)
+            
+            # Also update CSV if forced (for Git versioning)
+            if force_csv:
+                logger.info("Updating CSV file for Git versioning...")
+                save_to_csv(df_new)
         else:
-            # CSV mode
+            # CSV mode only
             save_to_csv(df_new)
             
         logger.success(f"CDS data update completed successfully (trigger={trigger})")

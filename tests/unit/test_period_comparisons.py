@@ -82,6 +82,7 @@ class TestPeriodComparisonModels:
         )
 
         assert stats.total_records == 100
+        assert stats.period_comparisons is not None
         assert len(stats.period_comparisons) == 2
         assert stats.period_comparisons[0].period == "1 month"
         assert stats.period_comparisons[1].period == "3 months"
@@ -93,6 +94,7 @@ class TestPeriodComparisonModels:
             earliest_date=date(2024, 1, 1),
             latest_date=date(2025, 11, 20),
             sources=["investing.com"],
+            period_comparisons=None,
         )
 
         assert stats.total_records == 50
