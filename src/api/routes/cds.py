@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Query, Depends, status, Request
 
 from src.database.connection import get_async_session
 from src.database.repositories.cds_repository import CDSRepository
-from src.api.auth import verify_api_key, optional_api_key
+from src.api.auth import verify_api_key
 from src.api.models.cds import (
     StandardResponse,
     CDSRecordResponse,

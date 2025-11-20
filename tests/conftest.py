@@ -1,7 +1,6 @@
 """Pytest configuration and shared fixtures."""
 
 import asyncio
-import os
 from typing import AsyncGenerator, Generator
 
 import pytest

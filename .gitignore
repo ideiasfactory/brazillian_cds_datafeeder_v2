@@ -84,3 +84,5 @@ dmypy.json
 
 # profiling data
 .prof
+
+.vercel

@@ -1,8 +1,6 @@
-import os
 from pathlib import Path
-from typing import Optional
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse, FileResponse
 
 from ..models.home import HomePageData, FeatureInfo, EndpointInfo

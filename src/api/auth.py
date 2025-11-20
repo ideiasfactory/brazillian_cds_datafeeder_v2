@@ -1,7 +1,7 @@
 """API Key authentication middleware and dependencies."""
 
 from typing import Optional
-from fastapi import Header, HTTPException, status, Request, Depends
+from fastapi import Header, HTTPException, status, Request
 
 from src.database.connection import get_async_session
 from src.database.repositories.api_key_repository import APIKeyRepository
