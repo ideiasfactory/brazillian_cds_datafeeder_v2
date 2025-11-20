@@ -37,14 +37,23 @@ jobs:
         black --check src tests
 
     - name: Run unit tests
+      env:
+        ENVIRONMENT: test
+        DATABASE_URL: "sqlite+aiosqlite:///:memory:"
       run: |
         pytest tests/unit -v --cov=src --cov-report=xml --cov-report=term -m unit
 
     - name: Run integration tests
+      env:
+        ENVIRONMENT: test
+        DATABASE_URL: "sqlite+aiosqlite:///:memory:"
       run: |
         pytest tests/integration -v -m integration
 
     - name: Run all tests with coverage
+      env:
+        ENVIRONMENT: test
+        DATABASE_URL: "sqlite+aiosqlite:///:memory:"
       run: |
         pytest tests/ -v --cov=src --cov-report=xml --cov-report=html
 
@@ -136,6 +145,9 @@ jobs:
         pip install -r requirements.txt
 
     - name: Test application startup
+      env:
+        ENVIRONMENT: test
+        DATABASE_URL: "sqlite+aiosqlite:///:memory:"
       run: |
         timeout 10 python -c "
         from main import app
