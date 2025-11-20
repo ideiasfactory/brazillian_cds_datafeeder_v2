@@ -95,9 +95,7 @@ class TestCDSEndpointsAuthentication:
 
         assert response.status_code == 401
 
-    def test_cds_with_invalid_api_key(
-        self, client: TestClient, test_session, invalid_api_key: str
-    ):
+    def test_cds_with_invalid_api_key(self, client: TestClient, invalid_api_key: str):
         """Test CDS endpoints with invalid API key."""
         headers = {"X-API-Key": invalid_api_key}
         response = client.get("/api/cds", headers=headers)
