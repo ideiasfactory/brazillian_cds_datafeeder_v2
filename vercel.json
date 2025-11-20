@@ -1,5 +1,4 @@
 {
-  "$comment": "CI/CD: Tests must pass before deployment",
   "version": 2,
   "builds": [
     {
