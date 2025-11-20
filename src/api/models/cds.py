@@ -92,9 +92,7 @@ class PeriodComparison(BaseModel):
     absolute_change: Optional[float] = Field(
         None, description="Absolute change in basis points"
     )
-    percentage_change: Optional[float] = Field(
-        None, description="Percentage change"
-    )
+    percentage_change: Optional[float] = Field(None, description="Percentage change")
     available: bool = Field(
         True, description="Whether data is available for this period"
     )
