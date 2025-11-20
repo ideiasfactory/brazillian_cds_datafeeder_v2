@@ -33,18 +33,20 @@ Adicione estes 3 secrets:
 
 ### 4. Desabilitar Deploy Automático da Vercel
 
-**Opção A: Via Dashboard**
-1. Acesse: Project Settings → Git
-2. Desmarque "Deploy on Push" para branch master/main
+**✅ Já configurado!** O arquivo `vercel.json` já contém:
 
-**Opção B: Via vercel.json**
 ```json
 {
   "github": {
-    "enabled": false
+    "deploymentEnabled": {
+      "master": false,
+      "main": false
+    }
   }
 }
 ```
+
+Isso desabilita o deploy automático da Vercel para os branches master/main, permitindo que apenas o GitHub Actions faça o deploy.
 
 ### 5. Commit e Push
 
