@@ -1,6 +1,6 @@
 """CDS Data Repository for database operations."""
 
-from datetime import date
+from datetime import date, timedelta
 from typing import Optional, List, Dict, Any
 from sqlalchemy import select, func, and_, desc, asc
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -243,6 +243,101 @@ class CDSRepository:
             "latest_date": dates.latest,
             "sources": sources,
         }
+
+    async def get_period_comparisons(
+        self, latest_date: Optional[date] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Calculate period-over-period comparisons for various time ranges.
+
+        Compares current CDS value with values from:
+        - 1 month ago (~30 days)
+        - 3 months ago (~90 days)
+        - 6 months ago (~180 days)
+        - 52 weeks ago (~364 days)
+
+        Args:
+            latest_date: Reference date (defaults to most recent date in DB)
+
+        Returns:
+            List of dictionaries with comparison data for each period
+        """
+        # Get latest date if not provided
+        if not latest_date:
+            latest_stmt = select(func.max(CDSRecord.record_date))
+            latest_result = await self.session.execute(latest_stmt)
+            latest_date = latest_result.scalar()
+
+        if not latest_date:
+            return []
+
+        # Get latest record
+        latest_record = await self.get_by_date(latest_date)
+        if not latest_record or latest_record.close is None:
+            return []
+
+        latest_value = latest_record.close
+
+        # Define periods: (name, days)
+        periods = [
+            ("1 month", 30),
+            ("3 months", 90),
+            ("6 months", 180),
+            ("52 weeks", 364),
+        ]
+
+        comparisons = []
+
+        for period_name, days in periods:
+            target_date = latest_date - timedelta(days=days)
+
+            # Find closest record on or before target date
+            stmt = (
+                select(CDSRecord)
+                .where(CDSRecord.record_date <= target_date)
+                .order_by(desc(CDSRecord.record_date))
+                .limit(1)
+            )
+            result = await self.session.execute(stmt)
+            past_record = result.scalar_one_or_none()
+
+            if past_record and past_record.close is not None:
+                past_value = past_record.close
+                absolute_change = latest_value - past_value
+                percentage_change = (
+                    (absolute_change / past_value * 100) if past_value != 0 else 0.0
+                )
+
+                comparisons.append(
+                    {
+                        "period": period_name,
+                        "days": days,
+                        "start_date": past_record.record_date,
+                        "end_date": latest_date,
+                        "start_value": past_value,
+                        "end_value": latest_value,
+                        "absolute_change": round(absolute_change, 4),
+                        "percentage_change": round(percentage_change, 2),
+                        "available": True,
+                    }
+                )
+            else:
+                # Data not available for this period
+                comparisons.append(
+                    {
+                        "period": period_name,
+                        "days": days,
+                        "start_date": None,
+                        "end_date": latest_date,
+                        "start_value": None,
+                        "end_value": latest_value,
+                        "absolute_change": None,
+                        "percentage_change": None,
+                        "available": False,
+                    }
+                )
+
+        return comparisons
 
     async def log_update(
         self,

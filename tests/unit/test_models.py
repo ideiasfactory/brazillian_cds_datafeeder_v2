@@ -1,7 +1,7 @@
 """Unit tests for database models."""
 
 import pytest
-from datetime import datetime, UTC
+from datetime import datetime, timezone, timedelta
 
 from src.database.models import APIKey
 
@@ -18,7 +18,7 @@ class TestAPIKeyModel:
             name="Test Key",
             description="Test description",
             is_active=True,
-            created_at=datetime.now(UTC),
+            created_at=datetime.now(timezone.utc),
             request_count=10,
         )
 
@@ -40,9 +40,7 @@ class TestAPIKeyModel:
 
     def test_api_key_is_expired_future_date(self):
         """Test is_expired with future expiration date."""
-        from datetime import timedelta
-
-        future_date = datetime.now(UTC) + timedelta(days=30)
+        future_date = datetime.now(timezone.utc) + timedelta(days=30)
         key = APIKey(
             id=1, key_hash="test_hash", name="Test Key", expires_at=future_date
         )
@@ -51,9 +49,7 @@ class TestAPIKeyModel:
 
     def test_api_key_is_expired_past_date(self):
         """Test is_expired with past expiration date."""
-        from datetime import timedelta
-
-        past_date = datetime.now(UTC) - timedelta(days=1)
+        past_date = datetime.now(timezone.utc) - timedelta(days=1)
         key = APIKey(id=1, key_hash="test_hash", name="Test Key", expires_at=past_date)
 
         assert key.is_expired() is True
@@ -74,9 +70,7 @@ class TestAPIKeyModel:
 
     def test_api_key_is_valid_expired(self):
         """Test is_valid when key is expired."""
-        from datetime import timedelta
-
-        past_date = datetime.now(UTC) - timedelta(days=1)
+        past_date = datetime.now(timezone.utc) - timedelta(days=1)
         key = APIKey(
             id=1,
             key_hash="test_hash",

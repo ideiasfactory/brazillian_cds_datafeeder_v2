@@ -80,6 +80,26 @@ class CDSStatisticsResponse(BaseModel):
     sources: List[str]
 
 
+class PeriodComparison(BaseModel):
+    """Comparison data for a specific time period."""
+
+    period: str = Field(..., description="Period name (e.g., '1 month', '3 months')")
+    days: int = Field(..., description="Number of days in the period")
+    start_date: Optional[date] = Field(None, description="Start date of comparison")
+    end_date: Optional[date] = Field(None, description="End date (latest date)")
+    start_value: Optional[float] = Field(None, description="CDS value at start date")
+    end_value: Optional[float] = Field(None, description="CDS value at end date")
+    absolute_change: Optional[float] = Field(
+        None, description="Absolute change in basis points"
+    )
+    percentage_change: Optional[float] = Field(
+        None, description="Percentage change"
+    )
+    available: bool = Field(
+        True, description="Whether data is available for this period"
+    )
+
+
 class CDSStatisticsData(BaseModel):
     """Data structure for CDS statistics endpoint."""
 
@@ -87,6 +107,9 @@ class CDSStatisticsData(BaseModel):
     earliest_date: Optional[date]
     latest_date: Optional[date]
     sources: List[str]
+    period_comparisons: Optional[List[PeriodComparison]] = Field(
+        None, description="Period-over-period comparisons (1M, 3M, 6M, 52W)"
+    )
 
 
 class FieldInfo(BaseModel):

@@ -18,6 +18,7 @@ from src.api.models.cds import (
     CDSSchemaInfo,
     CDSStatisticsInfo,
     FieldInfo,
+    PeriodComparison,
 )
 from src.logging_config import get_logger
 
@@ -366,6 +367,23 @@ async def get_cds_statistics(
             repo = CDSRepository(session)
             stats = await repo.get_statistics()
 
+            # Get period comparisons
+            period_comparisons = None
+            if stats["latest_date"]:
+                try:
+                    comparisons = await repo.get_period_comparisons(
+                        latest_date=stats["latest_date"]
+                    )
+                    # Convert dictionaries to PeriodComparison models
+                    period_comparisons = [
+                        PeriodComparison(**comp) for comp in comparisons
+                    ]
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to calculate period comparisons: {e}",
+                        extra={"correlation_id": correlation_id},
+                    )
+
             logger.info(
                 f"Retrieved CDS statistics: {stats['total_records']} total records",
                 extra={"correlation_id": correlation_id},
@@ -374,7 +392,9 @@ async def get_cds_statistics(
             return StandardResponse(
                 status="success",
                 correlation_id=correlation_id,
-                data=CDSStatisticsData(**stats).model_dump(),
+                data=CDSStatisticsData(
+                    **stats, period_comparisons=period_comparisons
+                ).model_dump(),
                 error_message=None,
                 timestamp=datetime.utcnow(),
             )
