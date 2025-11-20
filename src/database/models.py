@@ -78,11 +78,7 @@ class CDSRecord(Base):
         """Convert model to dictionary for API responses."""
         return {
             "id": self.id,
-            "date": (
-                self.record_date.isoformat()
-                if self.record_date is not None
-                else None
-            ),
+            "date": self.record_date.isoformat() if self.record_date else None,
             "open": self.open,
             "high": self.high,
             "low": self.low,
