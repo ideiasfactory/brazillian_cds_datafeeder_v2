@@ -75,12 +75,17 @@ async def test_api_key(api_key_repository: APIKeyRepository) -> tuple[str, APIKe
 
 
 @pytest.fixture(scope="function")
-def client(test_session: AsyncSession) -> Generator:
+def client(test_engine) -> Generator:
     """Create FastAPI test client with test database session."""
     from src.database.connection import get_session
 
+    async_session = async_sessionmaker(
+        test_engine, class_=AsyncSession, expire_on_commit=False
+    )
+
     async def override_get_session():
-        yield test_session
+        async with async_session() as session:
+            yield session
 
     app.dependency_overrides[get_session] = override_get_session
 
