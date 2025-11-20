@@ -1,9 +1,10 @@
 """API Key authentication middleware and dependencies."""
 
 from typing import Optional
-from fastapi import Header, HTTPException, status, Request
+from fastapi import Header, HTTPException, status, Request, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.connection import get_async_session
+from src.database.connection import get_session
 from src.database.repositories.api_key_repository import APIKeyRepository
 from src.logging_config import get_logger
 
@@ -11,7 +12,9 @@ logger = get_logger(__name__)
 
 
 async def verify_api_key(
-    request: Request, x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    request: Request,
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    session: AsyncSession = Depends(get_session),
 ) -> str:
     """
     Verify API key from request header.
@@ -19,6 +22,7 @@ async def verify_api_key(
     Args:
         x_api_key: API key from X-API-Key header
         request: FastAPI request object
+        session: Database session from dependency injection
 
     Returns:
         API key name if valid
@@ -45,24 +49,23 @@ async def verify_api_key(
         )
 
     # Validate the key
-    async with get_async_session() as session:
-        repo = APIKeyRepository(session)
-        api_key_record = await repo.validate_key(x_api_key)
+    repo = APIKeyRepository(session)
+    api_key_record = await repo.validate_key(x_api_key)
 
-        if api_key_record is None:
-            logger.warning(
-                "Invalid API key used",
-                extra={
-                    "correlation_id": correlation_id,
-                    "path": request.url.path if request else "unknown",
-                    "key_prefix": x_api_key[:8] if x_api_key else "none",
-                },
-            )
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired API key.",
-                headers={"WWW-Authenticate": "ApiKey"},
-            )
+    if api_key_record is None:
+        logger.warning(
+            "Invalid API key used",
+            extra={
+                "correlation_id": correlation_id,
+                "path": request.url.path if request else "unknown",
+                "key_prefix": x_api_key[:8] if x_api_key else "none",
+            },
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired API key.",
+            headers={"WWW-Authenticate": "ApiKey"},
+        )
 
     # Store API key info in request state for logging
     if request:
@@ -83,7 +86,9 @@ async def verify_api_key(
 
 
 async def optional_api_key(
-    request: Request, x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    request: Request,
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    session: AsyncSession = Depends(get_session),
 ) -> Optional[str]:
     """
     Optional API key verification (doesn't raise exception if missing).
@@ -93,6 +98,7 @@ async def optional_api_key(
     Args:
         request: FastAPI request object
         x_api_key: API key from X-API-Key header
+        session: Database session from dependency injection
 
     Returns:
         API key name if valid, None otherwise
@@ -101,6 +107,6 @@ async def optional_api_key(
         return None
 
     try:
-        return await verify_api_key(request, x_api_key)
+        return await verify_api_key(request, x_api_key, session)
     except HTTPException:
         return None

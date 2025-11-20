@@ -208,6 +208,31 @@ def get_session() -> Generator[Session, None, None]:
         session.close()
 
 
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    """
+    FastAPI dependency for asynchronous database session.
+    
+    This function is used as a FastAPI dependency and can be overridden in tests.
+    
+    Usage:
+        @app.get("/endpoint")
+        async def endpoint(session: AsyncSession = Depends(get_session)):
+            # Use session
+            result = await session.execute(select(CDSRecord))
+    """
+    factory = get_async_session_factory()
+    session = factory()
+
+    try:
+        yield session
+        await session.commit()
+    except Exception:
+        await session.rollback()
+        raise
+    finally:
+        await session.close()
+
+
 @asynccontextmanager
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     """
