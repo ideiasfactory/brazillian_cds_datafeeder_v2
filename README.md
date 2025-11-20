@@ -1,5 +1,12 @@
 # Brazilian CDS Data Feeder v2
 
+[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black.svg)](https://vercel.com)
+[![API Status](https://img.shields.io/badge/API-Live-success.svg)](https://brazillian-cds-datafeeder-v2.vercel.app/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 A production-ready FastAPI application that scrapes, stores, and serves Brazilian CDS 5-year historical data.
 
 ## 🌐 Live Demo
@@ -84,7 +91,7 @@ A production-ready FastAPI application that scrapes, stores, and serves Brazilia
    nano .env
    ```
    
-   See [ENVIRONMENT.md](ENVIRONMENT.md) for detailed configuration guide.
+   See [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md) for detailed configuration guide.
 
 5. **Run the application**
 
@@ -134,14 +141,26 @@ Set in Vercel dashboard:
 - `ENVIRONMENT`: `production` or `development`
 - `API_VERSION`: Version string (e.g., `2.0.0`)
 
-## 📡 API Endpoints
+## � Documentation
+
+Comprehensive guides are available in the `docs/` folder:
+
+- **[AUTHENTICATION.md](docs/AUTHENTICATION.md)** - Authentication system overview and usage
+- **[API_KEY_MANAGEMENT.md](docs/API_KEY_MANAGEMENT.md)** - Complete guide for managing API keys securely
+- **[DEPLOYMENT.md](docs/DEPLOYMENT.md)** - Deployment instructions
+- **[ENVIRONMENT.md](docs/ENVIRONMENT.md)** - Environment configuration guide
+- **[LOGGING.md](docs/LOGGING.md)** - Logging configuration and best practices
+- **[scripts/SCHEDULING.md](scripts/SCHEDULING.md)** - Data update scheduling guides
+
+## �📡 API Endpoints
 
 ### Authentication
 
-Most data endpoints require API key authentication. See **[AUTHENTICATION.md](AUTHENTICATION.md)** for:
+Most data endpoints require API key authentication. See **[docs/AUTHENTICATION.md](docs/AUTHENTICATION.md)** and **[docs/API_KEY_MANAGEMENT.md](docs/API_KEY_MANAGEMENT.md)** for:
 - How to create and manage API keys
 - Using authenticated endpoints
 - Security best practices
+- Key rotation and incident response
 
 ### Home
 - `GET /` - Landing page with API information
